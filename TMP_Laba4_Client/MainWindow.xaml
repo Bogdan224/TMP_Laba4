@@ -60,10 +60,21 @@
             <Grid Background="#FFECE9D8">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Left" Width="330">
-                        <ComboBox Margin="5 5 20 5" Height="20"/>
+                        <ComboBox x:Name="PathFolders" 
+                                  SelectionChanged="PathFolders_SelectionChanged"
+                            Margin="5 5 20 5" Height="20"/>
 
-                        <ScrollViewer Margin="5 5 20 5" Background="white" Height="285">
-                            <TextBlock/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      Margin="5 5 20 5" Background="white" Height="285">
+                            
+                            <ItemsControl x:Name="FoldersList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            
                         </ScrollViewer>
 
                         <StackPanel Orientation="Horizontal">
