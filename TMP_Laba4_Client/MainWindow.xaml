@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TMP_Laba4_Client"
         mc:Ignorable="d"
-        Title="Программа для обмена данными между компьютерами" Height="450" Width="800"
+        Title="Программа для обмена данными между компьютерами" 
+        Height="450" Width="1000"
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent">
 
@@ -58,15 +58,17 @@
             </Border>
 
             <Grid Background="#FFECE9D8">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Left" Width="330">
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Width="330">
                         <ComboBox x:Name="PathFolders" 
                                   SelectionChanged="PathFolders_SelectionChanged"
-                            Margin="5 5 20 5" Height="20"/>
+                                  IsEditable="True"
+                                  Margin="5 5 20 5" Height="20"/>
 
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      Margin="5 5 20 5" Background="white" Height="285">
-                            
+                                      Margin="5 5 20 5" Background="white" 
+                                      Height="285">
+
                             <ItemsControl x:Name="FoldersList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -74,7 +76,7 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            
+
                         </ScrollViewer>
 
                         <StackPanel Orientation="Horizontal">
@@ -104,25 +106,26 @@
                         <StackPanel Orientation="Horizontal">
                             <Button Content="Передать серверу" 
                                     Background="#FFECE9D8"
-                                Margin="5" Width="155"/>
+                                    Margin="5" Width="155"/>
 
                             <Button Content="Передать клиенту" 
                                     Background="#FFECE9D8"
-                                Margin="5" Width="155"/>
+                                    Margin="5" Width="155"/>
 
                         </StackPanel>
                     </StackPanel>
 
-                    <StackPanel DockPanel.Dock="Right">
-                        <StackPanel>
-                            <TextBlock Text="Клиентская сторона"
-                                       Margin="20 5 20 5" Height="20"/>
-                            
-                            <RichTextBox Margin="20 5 20 5" Height="375"/>
-                        </StackPanel>
+                    <StackPanel Width="320" HorizontalAlignment="Left">
+                        <TextBlock Text="Клиентская сторона"
+                                   Margin="20 5 20 5" Height="20"/>
+
+                        <RichTextBox Margin="20 5 20 5" Height="375"/>
                     </StackPanel>
-                </DockPanel>
-            
+
+                    <StackPanel Width="330">
+                        
+                    </StackPanel>
+                </StackPanel>
             </Grid>
         </DockPanel>
     </Border>
