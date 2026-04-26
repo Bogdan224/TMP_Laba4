@@ -58,79 +58,82 @@
             </Border>
 
             <Grid Background="#FFECE9D8">
-                
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel Width="330">
-                        <ComboBox x:Name="PathFolders" 
-                                  SelectionChanged="PathFolders_SelectionChanged"
-                                  IsEditable="True"
-                                  Margin="5 5 20 5" Height="20"/>
+                <DockPanel>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+                        <StackPanel Width="330">
+                            <ComboBox x:Name="PathFolders" 
+                                        SelectionChanged="PathFolders_SelectionChanged"
+                                        IsEditable="True"
+                                        Margin="5 5 20 5" Height="20"/>
 
-                        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      Margin="5 5 20 5" Height="350"
-                                      Background="white">
-                                      
-                            <ItemsControl x:Name="FoldersList">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            Margin="5 5 20 5" Height="370"
+                                            Background="white">
 
-                        </ScrollViewer>
+                                <ItemsControl x:Name="FoldersList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="IP-адрес" 
-                                       Margin="5" Padding="5 0 0 0" Width="90"/>
+                            </ScrollViewer>
 
-                            <TextBox Text="127.0.0.1" 
-                                     Margin="5" Width="90"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="IP-адрес" 
+                                            Margin="5" Padding="5 0 0 0" Width="90"/>
 
-                            <Button Content="Сервер отключить"
-                                    Background="#FFECE9D8"
-                                    Margin="5" Width="110"/>
+                                <TextBox Text="127.0.0.1" 
+                                            Margin="5" Width="90"/>
+
+                                <Button Content="Сервер отключить"
+                                        Background="#FFECE9D8"
+                                        Margin="5" Width="110"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Соединиться" 
+                                        Margin="5" Width="90"
+                                        Background="#FFECE9D8"/>
+
+                                <Button Content="Отключиться"
+                                        Background="#FFECE9D8"
+                                        Margin="5 5 20 5" Width="90"/>
+
+                                <Button Content="Выход" 
+                                        Background="#FFECE9D8"
+                                        Margin="20 5 0 5" Width="80"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Передать серверу" 
+                                        Background="#FFECE9D8"
+                                        Margin="5" Width="155"/>
+
+                                <Button Content="Передать клиенту" 
+                                        Background="#FFECE9D8"
+                                        Margin="5" Width="155"/>
+
+                            </StackPanel>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="Соединиться" 
-                                    Margin="5" Width="90"
-                                    Background="#FFECE9D8"/>
 
-                            <Button Content="Отключиться"
-                                    Background="#FFECE9D8"
-                                    Margin="5 5 20 5" Width="90"/>
+                        <StackPanel Width="320">
+                            <TextBlock Text="Клиентская сторона"
+                                        Margin="20 5 20 5" Height="20"/>
 
-                            <Button Content="Выход" 
-                                    Background="#FFECE9D8"
-                                    Margin="20 5 0 5" Width="80"/>
+                            <RichTextBox Margin="20 5 20 5" Height="440"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="Передать серверу" 
-                                    Background="#FFECE9D8"
-                                    Margin="5" Width="155"/>
 
-                            <Button Content="Передать клиенту" 
-                                    Background="#FFECE9D8"
-                                    Margin="5" Width="155"/>
+                        <StackPanel Width="550">
+                            <lvc:CartesianChart Height="225" Margin="20 20 5 10" 
+                                                Series="{Binding Series}"/>
 
-                        </StackPanel>
-                    </StackPanel>
-
-                    <StackPanel Width="320" HorizontalAlignment="Left">
-                        <TextBlock Text="Клиентская сторона"
-                                   Margin="20 5 20 5" Height="20"/>
-
-                        <RichTextBox Margin="20 5 20 5" Height="440"/>
-                    </StackPanel>
-
-                    <StackPanel Width="550">
-                        <lvc:CartesianChart Height="225" Margin="20 20 5 10" 
+                            <lvc:CartesianChart Height="225" Margin="20 10 5 20"
                                             Series="{Binding Series}"/>
-
-                        <lvc:CartesianChart Height="225" Margin="20 10 5 20"
-                                            Series="{Binding Series}"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom"/>
+                </DockPanel>
             </Grid>
         </DockPanel>
     </Border>
