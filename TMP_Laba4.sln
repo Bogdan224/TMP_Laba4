@@ -1,10 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.3.11512.155
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37111.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TMP_Laba4", "TMP_Laba4\TMP_Laba4.csproj", "{672F8893-A78F-4753-BB89-085A0AB5CFB8}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcessController_Server", "TMP_Laba4_Server\ProcessController_Server.csproj", "{726C6662-AB3D-4C06-8C06-42B0C83C844F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcessController_Client", "TMP_Laba4_Client\ProcessController_Client.csproj", "{596DFD04-6824-4331-BCDE-F198FE60EB6A}"
@@ -15,10 +13,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{672F8893-A78F-4753-BB89-085A0AB5CFB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{672F8893-A78F-4753-BB89-085A0AB5CFB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{672F8893-A78F-4753-BB89-085A0AB5CFB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{672F8893-A78F-4753-BB89-085A0AB5CFB8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{726C6662-AB3D-4C06-8C06-42B0C83C844F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{726C6662-AB3D-4C06-8C06-42B0C83C844F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{726C6662-AB3D-4C06-8C06-42B0C83C844F}.Release|Any CPU.ActiveCfg = Release|Any CPU

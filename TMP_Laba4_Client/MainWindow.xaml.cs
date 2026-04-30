@@ -1,9 +1,11 @@
-﻿using System.IO;
+﻿using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using System.IO;
+using System.Net.Sockets;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
 
 namespace TMP_Laba4_Client
 {
@@ -80,5 +82,10 @@ namespace TMP_Laba4_Client
         private void Minimize_Click(object sender, RoutedEventArgs e) => this.WindowState = WindowState.Minimized;
         private void Maximize_Click(object sender, RoutedEventArgs e) => this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
+
+        private async void ConnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            //Сделать подключение к серверу и получение от него данных в отдельном потоке
+        }
     }
 }

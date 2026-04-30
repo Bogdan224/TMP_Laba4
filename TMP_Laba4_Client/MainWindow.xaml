@@ -84,7 +84,7 @@
                                 <TextBlock Text="IP-адрес" 
                                             Margin="5" Padding="5 0 0 0" Width="90"/>
 
-                                <TextBox Text="127.0.0.1" 
+                                <TextBox Text="127.0.0.1" x:Name="IPAddressTextBox"
                                             Margin="5" Width="90"/>
 
                                 <Button Content="Сервер отключить"
@@ -94,7 +94,7 @@
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Соединиться" 
                                         Margin="5" Width="90"
-                                        Background="#FFECE9D8"/>
+                                        Background="#FFECE9D8" Click="ConnectButton_Click"/>
 
                                 <Button Content="Отключиться"
                                         Background="#FFECE9D8"
