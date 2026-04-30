@@ -98,7 +98,7 @@
 
                                 <Button Content="Отключиться"
                                         Background="#FFECE9D8"
-                                        Margin="5 5 20 5" Width="90"/>
+                                        Margin="5 5 20 5" Width="90" Click="DisconnectButton_Click"/>
 
                                 <Button Content="Выход" 
                                         Background="#FFECE9D8"
@@ -120,15 +120,18 @@
                             <TextBlock Text="Клиентская сторона"
                                         Margin="20 5 20 5" Height="20"/>
 
-                            <RichTextBox Margin="20 5 20 5" Height="440"/>
+                            <TextBlock x:Name="TextBlockClient"
+                                       TextWrapping="Wrap" 
+                                       Margin="20 5 20 5" Background="White"
+                                       Height="440" Width="280"/>
                         </StackPanel>
 
                         <StackPanel Width="550">
                             <lvc:CartesianChart Height="225" Margin="20 20 5 10" 
-                                                Series="{Binding Series}"/>
+                                                Series="{Binding TemperatureSeries}"/>
 
                             <lvc:CartesianChart Height="225" Margin="20 10 5 20"
-                                            Series="{Binding Series}"/>
+                                            Series="{Binding PressureSeries}"/>
                         </StackPanel>
                     </StackPanel>
 

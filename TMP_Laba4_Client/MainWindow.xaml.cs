@@ -1,5 +1,8 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using SkiaSharp;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -14,11 +17,48 @@ namespace TMP_Laba4_Client
     /// </summary>
     public partial class MainWindow : Window
     {
+        int port = 8888;
+
+        private TcpClient? client;
+
+        private NetworkStream? stream;
+
+        private bool isConnected = false;
+
+        public ObservableCollection<double> TemperatureValues { get; set; }
+        public ObservableCollection<double> PressureValues { get; set; }
+
+        public ISeries[] TemperatureSeries { get; set; }
+        public ISeries[] PressureSeries { get; set; }
+
         public MainWindow()
         {
             InitializeComponent();
 
             LoadPathsToComboBox();
+
+            TemperatureValues = new ObservableCollection<double>();
+            PressureValues = new ObservableCollection<double>();
+
+            TemperatureSeries = new ISeries[]
+            {
+                new LineSeries<double>
+                {
+                    Name = "Temperature",
+                    Values = TemperatureValues
+                }
+            };
+
+            PressureSeries = new ISeries[]
+            {
+                new LineSeries<double>
+                {
+                    Name = "Pressure",
+                    Values = PressureValues
+                }
+            };
+
+            DataContext = this;
         }
 
         private void PathFolders_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -85,7 +125,84 @@ namespace TMP_Laba4_Client
 
         private async void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            //Сделать подключение к серверу и получение от него данных в отдельном потоке
+            if (string.IsNullOrEmpty(IPAddressTextBox.Text))
+            {
+                MessageBox.Show("Введите IP сервера!");
+                return;
+            }
+
+            string ip = IPAddressTextBox.Text;
+            
+            try
+            {
+                client = new TcpClient(ip, port);
+            }
+            catch
+            {
+                MessageBox.Show("Сервер недоступен!");
+                return;
+            }
+            TextBlockClient.Text += "\nПодключено к серверу!";
+
+            stream = client.GetStream();
+            isConnected = true;
+
+            StreamReader reader = new StreamReader(stream);
+
+            await Task.Run(() =>
+            {
+                while (isConnected && client != null && client.Connected)
+                {
+                    string? response = reader.ReadLine();
+
+                    if (response == null)
+                        break;
+
+                    string[] parts = response.Split(',');
+
+                    if (parts.Length != 2)
+                        continue;
+
+                    double temperature =
+                        double.Parse(parts[0]);
+
+                    double pressure =
+                        double.Parse(parts[1]);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        TemperatureValues.Add(temperature);
+
+                        if (TemperatureValues.Count > 20)
+                            TemperatureValues.RemoveAt(0);
+
+                        PressureValues.Add(pressure);
+
+                        if (PressureValues.Count > 20)
+                            PressureValues.RemoveAt(0);
+                    });
+                }
+            });
+        }
+        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                isConnected = false;
+
+                Thread.Sleep(1000);
+
+                stream?.Close();
+
+                client?.Close();
+
+                TextBlockClient.Text +=
+                    "\nОтключено от сервера";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }
