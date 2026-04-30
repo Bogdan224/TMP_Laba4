@@ -147,6 +147,30 @@ namespace TMP_Laba4_Client
             stream = client.GetStream();
             isConnected = true;
 
+            LoadInfoForGraphics();
+        }
+        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                isConnected = false;
+
+                Thread.Sleep(1000);
+
+                stream?.Close();
+                client?.Close();
+
+                TextBlockClient.Text +=
+                    "\nОтключено от сервера";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+    
+        private async void LoadInfoForGraphics()
+        {
             StreamReader reader = new StreamReader(stream);
 
             await Task.Run(() =>
@@ -183,26 +207,6 @@ namespace TMP_Laba4_Client
                     });
                 }
             });
-        }
-        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                isConnected = false;
-
-                Thread.Sleep(1000);
-
-                stream?.Close();
-
-                client?.Close();
-
-                TextBlockClient.Text +=
-                    "\nОтключено от сервера";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
         }
     }
 }
