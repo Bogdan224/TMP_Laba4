@@ -123,8 +123,11 @@ namespace TMP_Laba4_Client
         private void Maximize_Click(object sender, RoutedEventArgs e) => this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
 
-        private async void ConnectButton_Click(object sender, RoutedEventArgs e)
+        private void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
+            DisconnectButton.IsEnabled = true;
+            ConnectButton.IsEnabled = false;
+
             if (string.IsNullOrEmpty(IPAddressTextBox.Text))
             {
                 MessageBox.Show("Введите IP сервера!");
@@ -151,6 +154,9 @@ namespace TMP_Laba4_Client
         }
         private void DisconnectButton_Click(object sender, RoutedEventArgs e)
         {
+            DisconnectButton.IsEnabled = false;
+            ConnectButton.IsEnabled = true;
+
             try
             {
                 isConnected = false;

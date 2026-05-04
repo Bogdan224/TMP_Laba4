@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿using ProcessController_Server;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
@@ -11,74 +14,102 @@ namespace TMP_Laba4_Server
 
         static void Main(string[] args)
         {
-            TcpListener server = new TcpListener(IPAddress.Any, 8888);
+            Server server = new Server(IPAddress.Loopback, 8888);
+            var folders = Directory.GetFileSystemEntries(@"D:\");
 
-            try
+            while (true)
             {
-                server.Start();
-                Console.WriteLine("Сервер запущен. Ожидание подключения...");
+                Console.WriteLine("Выберете действия для сервера (1-3):");
+                Console.WriteLine("1) Передача структуры отправленного каталога");
+                Console.WriteLine("2) Передача температуры и давления");
+                Console.WriteLine("3) Передача состояния технологических установок");
 
-                while (isRunning)
+                if (int.TryParse(Console.ReadLine(), out int choice))
                 {
-                    if (server.Pending())
+                    switch (choice)
                     {
-                        TcpClient client = server.AcceptTcpClient();
-                        Task.Run(() => HandleClient(client));
+                        case 1:
+                            server.Action = SendDataTask1;
+                            break;
+                        case 2:
+                            server.Action = SendDataTask2;
+                            break;
+                        default:
+                            Console.Clear();
+                            Console.WriteLine("Выберете число от 1 до 3");
+                            continue;
                     }
+                    break;
                 }
+
+                Console.Clear();
+                Console.WriteLine("Неверный формат! Попробуйте еще раз!");
+                continue;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка: {ex.Message}");
-            }
-            finally
-            {
-                server.Stop();
-            }
+
+            Console.Clear();
+            server.Start();
         }
 
-        static void HandleClient(TcpClient client)
+        static void SendDataTask1(TcpClient client)
+        {
+            try
+            {
+                using NetworkStream stream = client.GetStream();
+                using var writer = new StreamWriter(stream);
+                using var reader = new StreamReader(stream);
+
+                string path = reader.ReadToEnd();
+
+                if (!Directory.Exists(path))
+                    throw new Exception($"Папка не найдена: {path}");
+
+                var fileSystem = Directory.GetFileSystemEntries(path);
+
+                StringBuilder builder = new StringBuilder();
+
+                foreach (string files in fileSystem)
+                {
+                    string folderName = Path.GetFileName(files);
+                    builder.Append(folderName + '\n');
+                }
+
+                writer.Write(builder.ToString());
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+        }
+
+        static void SendDataTask2(TcpClient client)
         {
             try
             {
                 NetworkStream stream = client.GetStream();
+                using var writer = new StreamWriter(stream);
 
                 while (client.Connected)
                 {
-                    double temperature = GenerateTemperature();
-                    double pressure = GeneratePressure();
+                    double temperature = random.Next(101);
+                    double pressure = random.Next(7);
 
-                    // Форматирование строки: температура,давление
                     string data = $"{temperature},{pressure}\n";
-                    byte[] buffer = Encoding.UTF8.GetBytes(data);
 
-                    // Отправка данных
-                    stream.Write(buffer, 0, buffer.Length);
-                    
-                    Console.WriteLine($"Отправлено: T={temperature:F2}°C, P={pressure:F4} атм");
+                    writer.Write(data);
+                    writer.Flush();
+
+                    Console.WriteLine($"Отправлено: T={temperature}°C, P={pressure} атм");
 
                     Thread.Sleep(1000);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Ошибка при передаче данных: {ex.Message}\n");
+                throw;
             }
-            finally
-            {
-                client.Close();
-                Console.WriteLine("Диспетчер отключился. Ожидание нового подключения...");
-            }
-        }
-
-        static double GenerateTemperature()
-        {
-            return random.Next(101);
-        }
-
-        static double GeneratePressure()
-        {
-            return random.Next(7);
         }
     }
 }

@@ -93,11 +93,11 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Соединиться" 
-                                        Margin="5" Width="90"
+                                        Margin="5" Width="90" x:Name="ConnectButton"
                                         Background="#FFECE9D8" Click="ConnectButton_Click"/>
 
-                                <Button Content="Отключиться"
-                                        Background="#FFECE9D8"
+                                <Button Content="Отключиться" IsEnabled="False"
+                                        Background="#FFECE9D8" x:Name="DisconnectButton"
                                         Margin="5 5 20 5" Width="90" Click="DisconnectButton_Click"/>
 
                                 <Button Content="Выход" 
