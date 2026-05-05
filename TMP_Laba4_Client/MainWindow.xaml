@@ -82,14 +82,10 @@
 
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="IP-адрес" 
-                                            Margin="5" Padding="5 0 0 0" Width="90"/>
+                                            Margin="5" Padding="55 0 0 0" Width="148"/>
 
                                 <TextBox Text="127.0.0.1" x:Name="IPAddressTextBox"
-                                            Margin="5" Width="90"/>
-
-                                <Button Content="Сервер отключить"
-                                        Background="#FFECE9D8"
-                                        Margin="5" Width="110"/>
+                                            Margin="5" Width="148"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Соединиться" 
@@ -104,15 +100,10 @@
                                         Background="#FFECE9D8" Click="QuitButton_Click"
                                         Margin="20 5 0 5" Width="80"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal">
+                            <StackPanel>
                                 <Button Content="Передать серверу" Click="TransmitToServerButton_Click"
                                         Background="#FFECE9D8"
-                                        Margin="5" Width="155"/>
-
-                                <Button Content="Передать клиенту" 
-                                        Background="#FFECE9D8"
-                                        Margin="5" Width="155"/>
-
+                                        Margin="5" Width="200"/>
                             </StackPanel>
                         </StackPanel>
 
