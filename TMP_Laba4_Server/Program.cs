@@ -15,6 +15,7 @@ namespace TMP_Laba4_Server
         static void Main(string[] args)
         {
             Server server = new Server(IPAddress.Loopback, 8888);
+            var folders = Directory.GetFileSystemEntries(@"D:\");
 
             while (true)
             {
@@ -58,10 +59,7 @@ namespace TMP_Laba4_Server
                 using var writer = new StreamWriter(stream);
                 using var reader = new StreamReader(stream);
 
-                string? path = reader.ReadLine();
-
-                if (string.IsNullOrEmpty(path))
-                    return;
+                string path = reader.ReadToEnd();
 
                 if (!Directory.Exists(path))
                     throw new Exception($"Папка не найдена: {path}");
@@ -77,8 +75,7 @@ namespace TMP_Laba4_Server
                 }
 
                 writer.Write(builder.ToString());
-                writer.WriteLine("END");
-                writer.Flush();
+
             }
             catch (Exception)
             {
