@@ -13,7 +13,7 @@ namespace ProcessController_Server
             Success, Crash, Repair
         }
 
-        public Status InstallationStatus { get; set; }
+        public Status InstallationStatus { get; set; } = Status.Success;
 
         public void Working()
         {
