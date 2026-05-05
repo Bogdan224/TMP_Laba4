@@ -101,11 +101,11 @@
                                         Margin="5 5 20 5" Width="90" Click="DisconnectButton_Click"/>
 
                                 <Button Content="Выход" 
-                                        Background="#FFECE9D8"
+                                        Background="#FFECE9D8" Click="QuitButton_Click"
                                         Margin="20 5 0 5" Width="80"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="Передать серверу" 
+                                <Button Content="Передать серверу" Click="TransmitToServerButton_Click"
                                         Background="#FFECE9D8"
                                         Margin="5" Width="155"/>
 

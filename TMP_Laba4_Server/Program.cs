@@ -71,7 +71,10 @@ namespace TMP_Laba4_Server
                 using var writer = new StreamWriter(stream);
                 using var reader = new StreamReader(stream);
 
-                string path = reader.ReadToEnd();
+                string? path = reader.ReadLine();
+
+                if (string.IsNullOrEmpty(path))
+                    return;
 
                 if (!Directory.Exists(path))
                     throw new Exception($"Папка не найдена: {path}");
@@ -83,10 +86,11 @@ namespace TMP_Laba4_Server
                 foreach (string files in fileSystem)
                 {
                     string folderName = Path.GetFileName(files);
-                    builder.Append(folderName + '\n');
+                    builder.Append("FILE:" + folderName + '\n');
                 }
 
                 writer.Write(builder.ToString());
+                writer.WriteLine("END");
                 writer.Flush();
             }
             catch (IOException ex) when (ex.Message.Contains("disconnected") || ex.Message.Contains("closed"))
@@ -112,7 +116,7 @@ namespace TMP_Laba4_Server
                     double temperature = random.Next(101);
                     double pressure = random.Next(7);
 
-                    string data = $"{temperature},{pressure}\n";
+                    string data = $"DATA:{temperature},{pressure}\n";
 
                     writer.Write(data);
                     writer.Flush();
