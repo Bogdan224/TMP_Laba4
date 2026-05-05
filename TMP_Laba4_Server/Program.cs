@@ -15,24 +15,36 @@ namespace TMP_Laba4_Server
         static void Main(string[] args)
         {
             Server server = new Server(IPAddress.Loopback, 8888);
-            var folders = Directory.GetFileSystemEntries(@"D:\");
 
             while (true)
             {
-                Console.WriteLine("Выберете действия для сервера (1-3):");
-                Console.WriteLine("1) Передача структуры отправленного каталога");
-                Console.WriteLine("2) Передача температуры и давления");
-                Console.WriteLine("3) Передача состояния технологических установок");
+                Console.WriteLine("Выберете действия для сервера (1-2):");
+                Console.WriteLine("1) Передача структуры отправленного каталога и передача температуры и давления");
+                Console.WriteLine("2) Передача состояния технологических установок");
 
                 if (int.TryParse(Console.ReadLine(), out int choice))
                 {
                     switch (choice)
                     {
                         case 1:
-                            server.Action = SendDataTask1;
+                            server.Action = (client) =>
+                            {
+                                var cts = new CancellationTokenSource();
+
+                                Task.Run(() => SendDataTask1(client));
+                                Task.Run(() => SendDataTask2(client));
+
+                                // Чтобы метод не завершился сразу
+                                while (client.Connected)
+                                {
+                                    Thread.Sleep(100);
+                                }
+
+                                cts.Cancel();
+                            };
                             break;
                         case 2:
-                            server.Action = SendDataTask2;
+                            //server.Actions = SendDataTask2;
                             break;
                         default:
                             Console.Clear();
@@ -75,11 +87,15 @@ namespace TMP_Laba4_Server
                 }
 
                 writer.Write(builder.ToString());
-
+                writer.Flush();
             }
-            catch (Exception)
+            catch (IOException ex) when (ex.Message.Contains("disconnected") || ex.Message.Contains("closed"))
             {
-                throw;
+                Console.WriteLine("Клиент отключился во время отправки данных каталога");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка в SendDataTask1: {ex.Message}");
             }
 
         }
@@ -106,9 +122,9 @@ namespace TMP_Laba4_Server
                     Thread.Sleep(1000);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                Console.WriteLine($"Ошибка в SendDataTask2: {ex.Message}");
             }
         }
     }
