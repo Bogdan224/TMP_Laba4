@@ -115,7 +115,7 @@ namespace TMP_Laba4_Server
                     foreach (string files in fileSystem)
                     {
                         string folderName = Path.GetFileName(files);
-                        responseSB.Append("FILE: " + folderName + '\n');
+                        responseSB.Append("FILE:" + folderName + '\n');
                     }
                 }
                 else if (Path.GetExtension(path) == "txt")

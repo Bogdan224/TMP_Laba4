@@ -119,11 +119,11 @@
                         <StackPanel Width="320">
                             <TextBlock Text="Клиентская сторона"
                                         Margin="20 5 20 5" Height="20"/>
-
-                            <TextBlock x:Name="TextBlockClient"
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="20 5 20 5" Height="440" Width="280">
+                                <TextBlock x:Name="TextBlockClient"
                                        TextWrapping="Wrap" 
-                                       Margin="20 5 20 5" Background="White"
-                                       Height="440" Width="280"/>
+                                       Background="White"/>
+                            </ScrollViewer>
                         </StackPanel>
 
                         <StackPanel Width="550">
