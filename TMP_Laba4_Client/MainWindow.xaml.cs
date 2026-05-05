@@ -1,5 +1,6 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using ProcessController_Client;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -82,8 +83,6 @@ namespace TMP_Laba4_Client
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream);
             isConnected = true;
-
-            LoadInfo();
         }
         private void DisconnectButton_Click(object sender, RoutedEventArgs e)
         {
@@ -118,8 +117,7 @@ namespace TMP_Laba4_Client
             await writer.WriteLineAsync(PathFolders.Text);
             await writer.FlushAsync();
         }
-
-        private async void LoadInfo()
+        private async void LoadInfoButton_Click(object sender, RoutedEventArgs e)
         {
             await Task.Run(() =>
             {
@@ -130,8 +128,14 @@ namespace TMP_Laba4_Client
                     if (response == null)
                         break;
 
+                    if (isConnected == false)
+                        break;
+
                     Dispatcher.BeginInvoke(() =>
                     {
+                        if (isConnected == false)
+                            return;
+
                         if (response.StartsWith("DATA:"))
                         {
                             string data = response.Replace("DATA:", "");
@@ -167,6 +171,7 @@ namespace TMP_Laba4_Client
                 }
             });
         }
+
         private void LoadFoldersFromPath(string path)
         {
             FoldersList.Items.Clear();
@@ -235,5 +240,39 @@ namespace TMP_Laba4_Client
         private void Minimize_Click(object sender, RoutedEventArgs e) => this.WindowState = WindowState.Minimized;
         private void Maximize_Click(object sender, RoutedEventArgs e) => this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
+
+        private async void InstallationsWindowOpenButton_Click(object sender, RoutedEventArgs e)
+        {
+            InstallationsWindow installationsWindow = new InstallationsWindow();
+            installationsWindow.Show();
+
+            int buttonsCount = 0;
+
+            await Task.Run(() =>
+            {
+                while (isConnected && client != null && client.Connected)
+                {
+                    string? response = reader.ReadLine();
+
+                    if (response == null)
+                        break;
+
+                    buttonsCount++;
+
+                    string[] parts = response.Split(',');
+
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        if (isConnected == false)
+                            return;
+
+                        TextBlockClient.Text += parts[0] + " ";
+                        TextBlockClient.Text += parts[1] + " ";
+                        TextBlockClient.Text += buttonsCount + "\n";
+                    });
+                }
+
+            });
+        }
     }
 }

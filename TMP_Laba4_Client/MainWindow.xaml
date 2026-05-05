@@ -5,130 +5,85 @@
         xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         Title="Программа для обмена данными между компьютерами" 
-        Height="545" Width="1200"
-        WindowStyle="None" AllowsTransparency="True"
-        Background="Transparent">
+        Height="550" Width="1200"
+        SizeToContent="Height">
 
-    <Window.Resources>
-        <Style TargetType="Button" x:Key="RoundedButton">
-            <Setter Property="Background" Value="DarkRed"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                            CornerRadius="5"
-                            Margin="1"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                          VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
-
-    <Border Background="White" CornerRadius="5" BorderBrush="LightGray" BorderThickness="0">
+    <Grid Background="#FFECE9D8">
         <DockPanel>
-            <Border DockPanel.Dock="Top" Background="RoyalBlue" Height="32" CornerRadius="5,5,0,0"
-                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                <DockPanel>
-                    <TextBlock Text="Программа для обмена данными между компьютерами" FontSize="14"
-                               VerticalAlignment="Center" Margin="10,0" Foreground="White"/>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+                <StackPanel Width="330">
+                    <ComboBox x:Name="PathFolders" 
+                                            SelectionChanged="PathFolders_SelectionChanged"
+                                            IsEditable="True"
+                                            Margin="5 5 20 5" Height="20"/>
 
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" Margin="3">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                Margin="5 5 20 5" Height="370"
+                                                Background="white">
 
-                        <Button Content="___" Click="Minimize_Click" Width="30" BorderThickness="1"
-                                Background="RoyalBlue" Foreground="White" 
-                                BorderBrush="White" Style="{StaticResource RoundedButton}"/>
+                        <ItemsControl x:Name="FoldersList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                        <Button Content="□" Click="Maximize_Click" Width="30" BorderThickness="1"
-                                Background="RoyalBlue" Foreground="White" 
-                                BorderBrush="White" Style="{StaticResource RoundedButton}"/>
+                    </ScrollViewer>
 
-                        <Button Content="X" Click="Close_Click" Width="30" BorderThickness="1"
-                                Background="Red" Foreground="White"
-                                BorderBrush="White" Style="{StaticResource RoundedButton}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="IP-адрес" 
+                                                Margin="5" Padding="55 0 0 0" Width="148"/>
 
+                        <TextBox Text="127.0.0.1" x:Name="IPAddressTextBox"
+                                                Margin="5" Width="148"/>
                     </StackPanel>
-                </DockPanel>
-            </Border>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Соединиться" 
+                                            Margin="5" Width="90" x:Name="ConnectButton"
+                                            Background="#FFECE9D8" Click="ConnectButton_Click"/>
 
-            <Grid Background="#FFECE9D8">
-                <DockPanel>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-                        <StackPanel Width="330">
-                            <ComboBox x:Name="PathFolders" 
-                                        SelectionChanged="PathFolders_SelectionChanged"
-                                        IsEditable="True"
-                                        Margin="5 5 20 5" Height="20"/>
+                        <Button Content="Отключиться" IsEnabled="False"
+                                            Background="#FFECE9D8" x:Name="DisconnectButton"
+                                            Margin="5 5 20 5" Width="90" Click="DisconnectButton_Click"/>
 
-                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                            Margin="5 5 20 5" Height="370"
-                                            Background="white">
-
-                                <ItemsControl x:Name="FoldersList">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding}" FontSize="12" VerticalAlignment="Center"/>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                            </ScrollViewer>
-
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="IP-адрес" 
-                                            Margin="5" Padding="55 0 0 0" Width="148"/>
-
-                                <TextBox Text="127.0.0.1" x:Name="IPAddressTextBox"
-                                            Margin="5" Width="148"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="Соединиться" 
-                                        Margin="5" Width="90" x:Name="ConnectButton"
-                                        Background="#FFECE9D8" Click="ConnectButton_Click"/>
-
-                                <Button Content="Отключиться" IsEnabled="False"
-                                        Background="#FFECE9D8" x:Name="DisconnectButton"
-                                        Margin="5 5 20 5" Width="90" Click="DisconnectButton_Click"/>
-
-                                <Button Content="Выход" 
-                                        Background="#FFECE9D8" Click="QuitButton_Click"
-                                        Margin="20 5 0 5" Width="80"/>
-                            </StackPanel>
-                            <StackPanel>
-                                <Button Content="Передать серверу" Click="TransmitToServerButton_Click"
-                                        Background="#FFECE9D8"
-                                        Margin="5" Width="200"/>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <StackPanel Width="320">
-                            <TextBlock Text="Клиентская сторона"
-                                        Margin="20 5 20 5" Height="20"/>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="20 5 20 5" Height="440" Width="280">
-                                <TextBlock x:Name="TextBlockClient"
-                                       TextWrapping="Wrap" 
-                                       Background="White"/>
-                            </ScrollViewer>
-                        </StackPanel>
-
-                        <StackPanel Width="550">
-                            <lvc:CartesianChart Height="225" Margin="20 20 5 10" 
-                                                Series="{Binding TemperatureSeries}"/>
-
-                            <lvc:CartesianChart Height="225" Margin="20 10 5 20"
-                                            Series="{Binding PressureSeries}"/>
-                        </StackPanel>
+                        <Button Content="Выход" 
+                                            Background="#FFECE9D8" Click="QuitButton_Click"
+                                            Margin="20 5 0 5" Width="80"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Передать серверу" Click="TransmitToServerButton_Click"
+                                            Background="#FFECE9D8"
+                                            Margin="5" Width="150"/>
 
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom"/>
-                </DockPanel>
-            </Grid>
+                        <Button Content="Передать клиенту" Click="LoadInfoButton_Click"
+                                            Background="#FFECE9D8"
+                                            Margin="5" Width="150"/>
+                    </StackPanel>
+                    
+                    <Button Content="Установки" Click="InstallationsWindowOpenButton_Click"
+                                            Background="#FFECE9D8"
+                                            Margin="5" Width="200"/>
+                </StackPanel>
+
+                <StackPanel Width="320">
+                    <TextBlock Text="Клиентская сторона"
+                                            Margin="20 5 20 5" Height="20"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="20 5 20 5" Height="440" Width="280">
+                        <TextBlock x:Name="TextBlockClient"
+                                           TextWrapping="Wrap" 
+                                           Background="White"/>
+                    </ScrollViewer>
+                </StackPanel>
+
+                <StackPanel Width="550">
+                    <lvc:CartesianChart Height="225" Margin="20 20 5 10" 
+                                                    Series="{Binding TemperatureSeries}"/>
+
+                    <lvc:CartesianChart Height="225" Margin="20 10 5 20"
+                                                Series="{Binding PressureSeries}"/>
+                </StackPanel>
+            </StackPanel>
         </DockPanel>
-    </Border>
+    </Grid> 
 </Window>

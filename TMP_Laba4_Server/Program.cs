@@ -209,6 +209,7 @@ namespace TMP_Laba4_Server
                     Console.WriteLine(logSB.ToString());
 
                     Thread.Sleep(1000);
+                    Thread.Sleep(1000);
                 }
             }
             catch (Exception ex)
