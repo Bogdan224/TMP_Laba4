@@ -112,7 +112,7 @@ namespace TMP_Laba4_Server
                     foreach (string files in fileSystem)
                     {
                         string folderName = Path.GetFileName(files);
-                        responseSB.Append(folderName + '\n');
+                        responseSB.Append("FILE: " + folderName + '\n');
                     }
                 }
                 else if (Path.GetExtension(path) == "txt")
@@ -127,6 +127,7 @@ namespace TMP_Laba4_Server
                     throw new Exception("Неподдерживаемый формат файла!");
 
                 writer.Write(responseSB.ToString());
+                writer.Write("END");
                 writer.Flush();
             }
             catch (IOException ex) when (ex.Message.Contains("disconnected") || ex.Message.Contains("closed"))
@@ -152,7 +153,7 @@ namespace TMP_Laba4_Server
                     double temperature = random.Next(101);
                     double pressure = random.Next(7);
 
-                    string data = $"{temperature},{pressure}\n";
+                    string data = $"DATA:{temperature},{pressure}\n";
 
                     writer.Write(data);
                     writer.Flush();
@@ -187,7 +188,7 @@ namespace TMP_Laba4_Server
 
                     StringBuilder responseSB = new StringBuilder();
                     StringBuilder logSB = new StringBuilder();
-                    logSB.Append("Отправлено: ");
+                    logSB.Append("Отправлено:\n");
 
                     lock (installations)
                     {
