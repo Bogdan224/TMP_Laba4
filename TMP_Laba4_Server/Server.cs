@@ -12,7 +12,7 @@ namespace ProcessController_Server
     {
         private bool keepProcessing = true;
         private TcpListener listener;
-        public Action<TcpClient>? Action { get; set; }
+        public Action<TcpClient, NetworkStream>? Action { get; set; }
 
         public Server(IPAddress ipAddress, int port)
         {
@@ -52,7 +52,7 @@ namespace ProcessController_Server
                 if (Action == null)
                     throw new Exception("Не выбрано действие для вычислений!");
 
-                await Task.Run(() => Action.Invoke(client));
+                await Task.Run(() => Action.Invoke(client, client.GetStream()));
             }
             catch (Exception ex)
             {

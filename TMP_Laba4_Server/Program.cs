@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using ProcessController_Server;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime;
@@ -17,6 +18,7 @@ namespace TMP_Laba4_Server
         {
             Server server = new Server(IPAddress.Loopback, 8888);
 
+
             while (true)
             {
                 Console.WriteLine("Выберете действия для сервера (1-2):");
@@ -28,10 +30,13 @@ namespace TMP_Laba4_Server
                     switch (choice)
                     {
                         case 1:
-                            server.Action = (client) =>
+                            server.Action = (client, stream) =>
                             {
-                                Task.Run(() => SendDirectoryContent(client));
-                                Task.Run(() => SendTemperatureAndPressure(client));
+                                using StreamWriter writer = new StreamWriter(stream);
+                                using StreamReader reader = new StreamReader(stream);
+
+                                Task.Run(() => SendDirectoryContent(client, stream, writer, reader));
+                                Task.Run(() => SendTemperatureAndPressure(client, stream, writer));
 
                                 while (client.Connected)
                                 {
@@ -42,9 +47,11 @@ namespace TMP_Laba4_Server
                         case 2:
                             InitializeInstallationsList(out List<TechInstallation> installations);
 
-                            server.Action = (client) =>
+                            server.Action = (client, stream) =>
                             {
-                                Task.Run(() => SendInstallationsState(client, installations));
+                                using StreamWriter writer = new StreamWriter(stream);
+
+                                Task.Run(() => SendInstallationsState(client, stream, installations, writer));
 
                                 while (client.Connected)
                                 {
@@ -89,50 +96,49 @@ namespace TMP_Laba4_Server
             }
         }
 
-        static void SendDirectoryContent(TcpClient client)
+        static void SendDirectoryContent(TcpClient client, NetworkStream stream, StreamWriter writer, StreamReader reader)
         {
             try
             {
-                using NetworkStream stream = client.GetStream();
-                using var writer = new StreamWriter(stream);
-                using var reader = new StreamReader(stream);
-
-                string path = reader.ReadLine();
-
-                if (!Directory.Exists(path))
+                while (client.Connected)
                 {
-                    if(!File.Exists(path))
-                        throw new Exception($"Папка не найдена: {path}");
-                }
+                    string path = reader.ReadLine();
 
-                StringBuilder responseSB = new StringBuilder();
-                StringBuilder logSB = new StringBuilder();
-
-                if (Path.GetExtension(path) == string.Empty)
-                {
-                    var fileSystem = Directory.GetFileSystemEntries(path);
-
-                    logSB.Append($"Отправлено содержимое директории {Path.GetFileName(path)}");
-                    foreach (string files in fileSystem)
+                    if (!Directory.Exists(path))
                     {
-                        string folderName = Path.GetFileName(files);
-                        responseSB.Append("FILE:" + folderName + '\n');
+                        if (!File.Exists(path))
+                            throw new Exception($"Папка не найдена: {path}");
                     }
-                }
-                else if (Path.GetExtension(path) == ".txt")
-                {
-                    using FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-                    using var fileReader = new StreamReader(fileStream);
 
-                    responseSB.Append("FILE:" + fileReader.ReadLine());
-                    logSB.Append($"Отправлено содержимое файла {Path.GetFileName(path)}");
-                }
-                else
-                    throw new Exception("Неподдерживаемый формат файла!");
+                    StringBuilder responseSB = new StringBuilder();
+                    StringBuilder logSB = new StringBuilder();
 
-                writer.WriteLine(responseSB.ToString());
-                writer.WriteLine("END");
-                writer.Flush();
+                    if (Path.GetExtension(path) == string.Empty)
+                    {
+                        var fileSystem = Directory.GetFileSystemEntries(path);
+
+                        logSB.Append($"Отправлено содержимое директории {Path.GetFileName(path)}");
+                        foreach (string files in fileSystem)
+                        {
+                            string folderName = Path.GetFileName(files);
+                            responseSB.Append("FILE:" + folderName + '\n');
+                        }
+                    }
+                    else if (Path.GetExtension(path) == ".txt")
+                    {
+                        using FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+                        using var fileReader = new StreamReader(fileStream);
+
+                        responseSB.Append("FILE:" + fileReader.ReadLine());
+                        logSB.Append($"Отправлено содержимое файла {Path.GetFileName(path)}");
+                    }
+                    else
+                        throw new Exception("Неподдерживаемый формат файла!");
+
+                    writer.WriteLine(responseSB.ToString());
+                    writer.WriteLine("END");
+                    writer.Flush();
+                }
             }
             catch (IOException ex) when (ex.Message.Contains("disconnected") || ex.Message.Contains("closed"))
             {
@@ -145,13 +151,10 @@ namespace TMP_Laba4_Server
 
         }
 
-        static void SendTemperatureAndPressure(TcpClient client)
+        static void SendTemperatureAndPressure(TcpClient client, NetworkStream stream, StreamWriter writer)
         {
             try
             {
-                NetworkStream stream = client.GetStream();
-                using var writer = new StreamWriter(stream);
-
                 while (client.Connected)
                 {
                     double temperature = random.Next(101);
@@ -173,13 +176,10 @@ namespace TMP_Laba4_Server
             }
         }
 
-        static void SendInstallationsState(TcpClient client, IList<TechInstallation> installations)
+        static void SendInstallationsState(TcpClient client, NetworkStream stream, IList<TechInstallation> installations, StreamWriter writer)
         {
             try
             {
-                NetworkStream stream = client.GetStream();
-                using var writer = new StreamWriter(stream);
-
                 while (client.Connected)
                 {
                     lock (installations)
