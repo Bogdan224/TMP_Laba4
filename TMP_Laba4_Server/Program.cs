@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 using ProcessController_Server;
 using System.Net;
 using System.Net.Sockets;
@@ -98,8 +99,11 @@ namespace TMP_Laba4_Server
 
                 string path = reader.ReadLine();
 
-                if (!Directory.Exists(path) || !File.Exists(path))
-                    throw new Exception($"Папка не найдена: {path}");
+                if (!Directory.Exists(path))
+                {
+                    if(!File.Exists(path))
+                        throw new Exception($"Папка не найдена: {path}");
+                }
 
                 StringBuilder responseSB = new StringBuilder();
                 StringBuilder logSB = new StringBuilder();
@@ -115,19 +119,19 @@ namespace TMP_Laba4_Server
                         responseSB.Append("FILE:" + folderName + '\n');
                     }
                 }
-                else if (Path.GetExtension(path) == "txt")
+                else if (Path.GetExtension(path) == ".txt")
                 {
                     using FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
                     using var fileReader = new StreamReader(fileStream);
 
-                    responseSB.Append(reader.ReadToEnd());
+                    responseSB.Append("FILE:" + fileReader.ReadLine());
                     logSB.Append($"Отправлено содержимое файла {Path.GetFileName(path)}");
                 }
                 else
                     throw new Exception("Неподдерживаемый формат файла!");
 
-                writer.Write(responseSB.ToString());
-                writer.Write("END");
+                writer.WriteLine(responseSB.ToString());
+                writer.WriteLine("END");
                 writer.Flush();
             }
             catch (IOException ex) when (ex.Message.Contains("disconnected") || ex.Message.Contains("closed"))
