@@ -96,7 +96,7 @@ namespace TMP_Laba4_Server
                 using var writer = new StreamWriter(stream);
                 using var reader = new StreamReader(stream);
 
-                string path = reader.ReadToEnd();
+                string path = reader.ReadLine();
 
                 if (!Directory.Exists(path))
                     throw new Exception($"Папка не найдена: {path}");
