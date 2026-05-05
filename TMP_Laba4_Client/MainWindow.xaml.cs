@@ -10,6 +10,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace TMP_Laba4_Client
 {
@@ -128,9 +129,6 @@ namespace TMP_Laba4_Client
                     if (response == null)
                         break;
 
-                    if (isConnected == false)
-                        break;
-
                     Dispatcher.BeginInvoke(() =>
                     {
                         if (isConnected == false)
@@ -171,6 +169,94 @@ namespace TMP_Laba4_Client
                 }
             });
         }
+
+        // ДОДЕЛАТЬ
+        //private async void InstallationsWindowOpenButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    InstallationsWindow installationsWindow = new InstallationsWindow();
+        //    installationsWindow.Show();
+
+        //    bool buttonsCreated = false;
+
+        //    await Task.Run(() =>
+        //    {
+        //        while (isConnected &&
+        //               client != null &&
+        //               client.Connected)
+        //        {
+        //            string? response = reader.ReadLine();
+
+        //            if (response == null)
+        //                break;
+
+        //            Dispatcher.Invoke(() =>
+        //            {
+        //                if (isConnected == false)
+        //                    return;
+
+        //                if (response.StartsWith("COUNT:"))
+        //                {
+        //                    if (buttonsCreated)
+        //                        return;
+
+        //                    int count = int.Parse(response.Replace("COUNT:", ""));
+
+
+        //                    for (int i = 0; i < count; i++)
+        //                    {
+        //                        Button button = new Button();
+
+        //                        button.Width = 150;
+        //                        button.Height = 70;
+        //                        button.Margin = new Thickness(5);
+
+        //                        button.Content = $"Установка {i}";
+
+
+        //                        installationsWindow.ButtonsPanel.Children.Add(button);
+        //                    }
+
+        //                    buttonsCreated = true;
+        //                }
+        //                else
+        //                {
+        //                    string[] parts = response.Split(',');
+
+        //                    int index = int.Parse(parts[0]);
+        //                    int status = int.Parse(parts[1]);
+
+        //                    if (index >= installationsWindow.ButtonsPanel.Children.Count)
+        //                        return;
+
+        //                    Button button = (Button)installationsWindow.ButtonsPanel.Children[index];
+
+        //                    string statusText = "";
+
+        //                    switch (status)
+        //                    {
+        //                        case 0:
+        //                            statusText = "Работает";
+        //                            button.Background = Brushes.Green;
+        //                            break;
+
+        //                        case 1:
+        //                            statusText = "Авария";
+        //                            button.Background = Brushes.Red;
+        //                            break;
+
+        //                        case 2:
+        //                            statusText = "Ремонт";
+        //                            button.Background = Brushes.Gray;
+        //                            break;
+        //                    }
+
+        //                    button.Content =
+        //                        $"Установка {index}\n{statusText}";
+        //                }
+        //            });
+        //        }
+        //    });
+        //}
 
         private void LoadFoldersFromPath(string path)
         {
@@ -234,82 +320,6 @@ namespace TMP_Laba4_Client
                     Values = PressureValues
                 }
             };
-        }
-
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => this.DragMove();
-        private void Minimize_Click(object sender, RoutedEventArgs e) => this.WindowState = WindowState.Minimized;
-        private void Maximize_Click(object sender, RoutedEventArgs e) => this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
-
-        private async void InstallationsWindowOpenButton_Click(
-            object sender,
-            RoutedEventArgs e)
-        {
-            InstallationsWindow installationsWindow =
-                new InstallationsWindow();
-
-            installationsWindow.Show();
-
-            await Task.Run(() =>
-            {
-                bool buttonsCreated = false;
-
-                while (isConnected &&
-                       client != null &&
-                       client.Connected)
-                {
-                    string? response = reader.ReadLine();
-
-                    if (response == null)
-                        break;
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (response.StartsWith("COUNT:"))
-                        {
-                            int count = int.Parse(
-                                response.Replace("COUNT:", ""));
-
-                            for (int i = 0; i < count; i++)
-                            {
-                                Button button = new Button();
-
-                                button.Content = $"Установка {i}";
-                                button.Width = 120;
-                                button.Height = 40;
-                                button.Margin = new Thickness(5);
-
-                                installationsWindow.ButtonsPanel
-                                    .Children.Add(button);
-                            }
-
-                            buttonsCreated = true;
-                        }
-                        else if (response == "END")
-                        {
-                            return;
-                        }
-                        else
-                        {
-                            string[] parts = response.Split(',');
-
-                            int index = int.Parse(parts[0]);
-                            int status = int.Parse(parts[1]);
-
-                            if (index <
-                                installationsWindow.ButtonsPanel.Children.Count)
-                            {
-                                Button btn =
-                                    (Button)installationsWindow
-                                    .ButtonsPanel.Children[index];
-
-                                btn.Content =
-                                    $"Установка {index}\nСтатус: {status}";
-                            }
-                        }
-                    });
-                }
-            });
         }
     }
 }
