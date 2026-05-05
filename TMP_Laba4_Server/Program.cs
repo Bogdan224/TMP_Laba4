@@ -1,8 +1,8 @@
-﻿using ProcessController_Server;
-using System.IO;
-using System.Linq;
+﻿using Microsoft.Extensions.Configuration;
+using ProcessController_Server;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime;
 using System.Text;
 
 namespace TMP_Laba4_Server
@@ -29,26 +29,31 @@ namespace TMP_Laba4_Server
                         case 1:
                             server.Action = (client) =>
                             {
-                                var cts = new CancellationTokenSource();
+                                Task.Run(() => SendDirectoryContent(client));
+                                Task.Run(() => SendTemperatureAndPressure(client));
 
-                                Task.Run(() => SendDataTask1(client));
-                                Task.Run(() => SendDataTask2(client));
-
-                                // Чтобы метод не завершился сразу
                                 while (client.Connected)
                                 {
                                     Thread.Sleep(100);
                                 }
-
-                                cts.Cancel();
                             };
                             break;
                         case 2:
-                            //server.Actions = SendDataTask2;
+                            InitializeInstallationsList(out List<TechInstallation> installations);
+
+                            server.Action = (client) =>
+                            {
+                                Task.Run(() => SendInstallationsState(client, installations));
+
+                                while (client.Connected)
+                                {
+                                    Thread.Sleep(100);
+                                }
+                            };
                             break;
                         default:
                             Console.Clear();
-                            Console.WriteLine("Выберете число от 1 до 3");
+                            Console.WriteLine("Выберете число от 1 до 2");
                             continue;
                     }
                     break;
@@ -63,7 +68,27 @@ namespace TMP_Laba4_Server
             server.Start();
         }
 
-        static void SendDataTask1(TcpClient client)
+        static void InitializeInstallationsList(out List<TechInstallation> installations)
+        {
+            var dirInfo = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+                   .SetBasePath(dirInfo.Parent!.Parent!.Parent!.FullName)
+                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                   .AddEnvironmentVariables();
+
+            var configuration = configurationBuilder.Build();
+            var config = configuration.GetSection("Project").Get<Project>()!;
+
+            installations = new();
+
+            for (int i = 0; i < config.InstallationsCount; i++)
+            {
+                installations.Add(new TechInstallation());
+            }
+        }
+
+        static void SendDirectoryContent(TcpClient client)
         {
             try
             {
@@ -71,7 +96,7 @@ namespace TMP_Laba4_Server
                 using var writer = new StreamWriter(stream);
                 using var reader = new StreamReader(stream);
 
-                string? path = reader.ReadLine();
+                string path = reader.ReadLine();
 
                 if (string.IsNullOrEmpty(path))
                     return;
@@ -79,18 +104,33 @@ namespace TMP_Laba4_Server
                 if (!Directory.Exists(path))
                     throw new Exception($"Папка не найдена: {path}");
 
-                var fileSystem = Directory.GetFileSystemEntries(path);
+                StringBuilder responseSB = new StringBuilder();
+                StringBuilder logSB = new StringBuilder();
 
-                StringBuilder builder = new StringBuilder();
-
-                foreach (string files in fileSystem)
+                if (Path.GetExtension(path) == string.Empty)
                 {
-                    string folderName = Path.GetFileName(files);
-                    builder.Append("FILE:" + folderName + '\n');
-                }
+                    var fileSystem = Directory.GetFileSystemEntries(path);
 
-                writer.Write(builder.ToString());
-                writer.WriteLine("END");
+                    logSB.Append($"Отправлено содержимое директории {Path.GetFileName(path)}");
+                    foreach (string files in fileSystem)
+                    {
+                        string folderName = Path.GetFileName(files);
+                        responseSB.Append("FILE: " + folderName + '\n');
+                    }
+                }
+                else if (Path.GetExtension(path) == "txt")
+                {
+                    using FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+                    using var fileReader = new StreamReader(fileStream);
+
+                    responseSB.Append(reader.ReadToEnd());
+                    logSB.Append($"Отправлено содержимое файла {Path.GetFileName(path)}");
+                }
+                else
+                    throw new Exception("Неподдерживаемый формат файла!");
+
+                writer.Write(responseSB.ToString());
+                writer.Write("END");
                 writer.Flush();
             }
             catch (IOException ex) when (ex.Message.Contains("disconnected") || ex.Message.Contains("closed"))
@@ -99,12 +139,12 @@ namespace TMP_Laba4_Server
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка в SendDataTask1: {ex.Message}");
+                Console.WriteLine($"Ошибка в SendDirectoryContent: {ex.Message}");
             }
 
         }
 
-        static void SendDataTask2(TcpClient client)
+        static void SendTemperatureAndPressure(TcpClient client)
         {
             try
             {
@@ -128,8 +168,57 @@ namespace TMP_Laba4_Server
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка в SendDataTask2: {ex.Message}");
+                Console.WriteLine($"Ошибка в SendTemperatureAndPressure: {ex.Message}");
             }
+        }
+
+        static void SendInstallationsState(TcpClient client, IList<TechInstallation> installations)
+        {
+            try
+            {
+                NetworkStream stream = client.GetStream();
+                using var writer = new StreamWriter(stream);
+
+                while (client.Connected)
+                {
+                    lock (installations)
+                    {
+                        foreach (TechInstallation installation in installations)
+                        {
+                            installation.Working();
+                        }
+                    }
+
+                    StringBuilder responseSB = new StringBuilder();
+                    StringBuilder logSB = new StringBuilder();
+                    logSB.Append("Отправлено:\n");
+
+                    lock (installations)
+                    {
+                        for (int i = 0; i < installations.Count; i++)
+                        {
+                            responseSB.Append(i + "," + (int)installations[i].InstallationStatus + "\n");
+                            logSB.Append("номер установки - " + i + ", статус - " + installations[i].InstallationStatus + "\n");
+                        }
+                    }
+
+                    writer.Write(responseSB.ToString());
+                    writer.Flush();
+
+                    Console.WriteLine(logSB.ToString());
+
+                    Thread.Sleep(1000);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка в SendInstallationsState: {ex.Message}");
+            }
+        }
+
+        static void SendRepairedInstallation(TcpClient client)
+        {
+
         }
     }
 }
