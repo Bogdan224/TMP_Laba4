@@ -180,6 +180,9 @@ namespace TMP_Laba4_Server
         {
             try
             {
+                writer.WriteLine($"COUNT:{installations.Count}");
+                writer.Flush();
+
                 while (client.Connected)
                 {
                     lock (installations)

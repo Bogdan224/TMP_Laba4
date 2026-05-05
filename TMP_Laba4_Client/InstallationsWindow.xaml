@@ -7,5 +7,5 @@
         mc:Ignorable="d"
         Title="Панель с установками" Height="540" Width="1200" WindowStartupLocation="CenterScreen">
     
-    <StackPanel Orientation="Horizontal" x:Name="StackForButtons"/>
+    <WrapPanel x:Name="ButtonsPanel"/>
 </Window>

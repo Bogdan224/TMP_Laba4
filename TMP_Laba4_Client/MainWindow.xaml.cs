@@ -241,37 +241,74 @@ namespace TMP_Laba4_Client
         private void Maximize_Click(object sender, RoutedEventArgs e) => this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
 
-        private async void InstallationsWindowOpenButton_Click(object sender, RoutedEventArgs e)
+        private async void InstallationsWindowOpenButton_Click(
+            object sender,
+            RoutedEventArgs e)
         {
-            InstallationsWindow installationsWindow = new InstallationsWindow();
-            installationsWindow.Show();
+            InstallationsWindow installationsWindow =
+                new InstallationsWindow();
 
-            int buttonsCount = 0;
+            installationsWindow.Show();
 
             await Task.Run(() =>
             {
-                while (isConnected && client != null && client.Connected)
+                bool buttonsCreated = false;
+
+                while (isConnected &&
+                       client != null &&
+                       client.Connected)
                 {
                     string? response = reader.ReadLine();
 
                     if (response == null)
                         break;
 
-                    buttonsCount++;
-
-                    string[] parts = response.Split(',');
-
-                    Dispatcher.BeginInvoke(() =>
+                    Dispatcher.Invoke(() =>
                     {
-                        if (isConnected == false)
-                            return;
+                        if (response.StartsWith("COUNT:"))
+                        {
+                            int count = int.Parse(
+                                response.Replace("COUNT:", ""));
 
-                        TextBlockClient.Text += parts[0] + " ";
-                        TextBlockClient.Text += parts[1] + " ";
-                        TextBlockClient.Text += buttonsCount + "\n";
+                            for (int i = 0; i < count; i++)
+                            {
+                                Button button = new Button();
+
+                                button.Content = $"Установка {i}";
+                                button.Width = 120;
+                                button.Height = 40;
+                                button.Margin = new Thickness(5);
+
+                                installationsWindow.ButtonsPanel
+                                    .Children.Add(button);
+                            }
+
+                            buttonsCreated = true;
+                        }
+                        else if (response == "END")
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            string[] parts = response.Split(',');
+
+                            int index = int.Parse(parts[0]);
+                            int status = int.Parse(parts[1]);
+
+                            if (index <
+                                installationsWindow.ButtonsPanel.Children.Count)
+                            {
+                                Button btn =
+                                    (Button)installationsWindow
+                                    .ButtonsPanel.Children[index];
+
+                                btn.Content =
+                                    $"Установка {index}\nСтатус: {status}";
+                            }
+                        }
                     });
                 }
-
             });
         }
     }
