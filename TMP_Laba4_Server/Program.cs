@@ -98,7 +98,7 @@ namespace TMP_Laba4_Server
 
                 string path = reader.ReadLine();
 
-                if (!Directory.Exists(path))
+                if (!Directory.Exists(path) || !File.Exists(path))
                     throw new Exception($"Папка не найдена: {path}");
 
                 StringBuilder responseSB = new StringBuilder();
