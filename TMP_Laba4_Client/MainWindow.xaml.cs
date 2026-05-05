@@ -23,6 +23,9 @@ namespace TMP_Laba4_Client
 
         private NetworkStream? stream;
 
+        private StreamReader reader;
+        private StreamWriter writer;
+
         private bool isConnected = false;
 
         public ObservableCollection<double> TemperatureValues { get; set; }
@@ -37,6 +40,146 @@ namespace TMP_Laba4_Client
 
             LoadPathsToComboBox();
 
+            CreateSeries();
+            DataContext = this;
+        }
+
+        private void PathFolders_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PathFolders.SelectedItem == null) return;
+
+            string selectedPath = PathFolders.SelectedItem.ToString();
+
+            LoadFoldersFromPath(selectedPath);
+        }
+
+        private void ConnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            DisconnectButton.IsEnabled = true;
+            ConnectButton.IsEnabled = false;
+
+            if (string.IsNullOrEmpty(IPAddressTextBox.Text))
+            {
+                MessageBox.Show("Введите IP сервера!");
+                return;
+            }
+
+            string ip = IPAddressTextBox.Text;
+            
+            try
+            {
+                client = new TcpClient(ip, port);
+            }
+            catch
+            {
+                MessageBox.Show("Сервер недоступен!");
+                return;
+            }
+            TextBlockClient.Text += "Подключено к серверу!\n";
+
+            stream = client.GetStream();
+            reader = new StreamReader(stream);
+            writer = new StreamWriter(stream);
+            isConnected = true;
+
+            //LoadInfoForGraphics();
+        }
+        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            DisconnectButton.IsEnabled = false;
+            ConnectButton.IsEnabled = true;
+
+            try
+            {
+                isConnected = false;
+
+                Thread.Sleep(1000);
+
+                stream?.Close();
+                client?.Close();
+
+                TextBlockClient.Text += "\nОтключено от сервера\n";
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private async void TransmitToServerButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (reader == null || writer == null)
+                return;
+
+            await writer.WriteLineAsync(PathFolders.Text);
+            await writer.FlushAsync();
+
+            string? response;
+
+            while ((response = await reader.ReadLineAsync()) != null)
+            {
+                if (response == "END")
+                    break;
+
+                TextBlockClient.Text += response + "\n";
+            }
+
+            response = null;
+        }
+
+        private async void LoadInfoForGraphics()
+        {
+            if (stream == null)
+                return;
+
+            StreamReader reader = new StreamReader(stream);
+
+            await Task.Run(() =>
+            {
+                while (isConnected && client != null && client.Connected)
+                {
+                    string? response = reader.ReadLine();
+
+                    if (!isConnected)
+                        break;
+
+                    if (response == null)
+                        break;
+
+                    string[] parts = response.Split(',');
+
+                    if (parts.Length != 2)
+                        continue;
+
+                    double temperature =
+                        double.Parse(parts[0]);
+
+                    double pressure =
+                        double.Parse(parts[1]);
+
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        if (!isConnected)
+                            return;
+
+                        TextBlockClient.Text += $"T = {temperature}, P = {pressure}\n";
+
+                        TemperatureValues.Add(temperature);
+
+                        if (TemperatureValues.Count > 20)
+                            TemperatureValues.RemoveAt(0);
+
+                        PressureValues.Add(pressure);
+
+                        if (PressureValues.Count > 20)
+                            PressureValues.RemoveAt(0);
+                    });
+                }
+            });
+        }
+        private void CreateSeries()
+        {
             TemperatureValues = new ObservableCollection<double>();
             PressureValues = new ObservableCollection<double>();
 
@@ -57,17 +200,6 @@ namespace TMP_Laba4_Client
                     Values = PressureValues
                 }
             };
-
-            DataContext = this;
-        }
-
-        private void PathFolders_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (PathFolders.SelectedItem == null) return;
-
-            string selectedPath = PathFolders.SelectedItem.ToString();
-
-            LoadFoldersFromPath(selectedPath);
         }
 
         private void LoadFoldersFromPath(string path)
@@ -106,7 +238,6 @@ namespace TMP_Laba4_Client
                 FoldersList.Items.Add($"Ошибка: {ex.Message}");
             }
         }
-
         private void LoadPathsToComboBox()
         {
             PathFolders.Items.Add(@"C:\");
@@ -116,103 +247,14 @@ namespace TMP_Laba4_Client
             PathFolders.Items.Add(@"D:\");
         }
 
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-            => this.DragMove();
+        private void QuitButton_Click(object sender, RoutedEventArgs e) => this.Close();
 
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => this.DragMove();
         private void Minimize_Click(object sender, RoutedEventArgs e) => this.WindowState = WindowState.Minimized;
         private void Maximize_Click(object sender, RoutedEventArgs e) => this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
 
-        private void ConnectButton_Click(object sender, RoutedEventArgs e)
-        {
-            DisconnectButton.IsEnabled = true;
-            ConnectButton.IsEnabled = false;
 
-            if (string.IsNullOrEmpty(IPAddressTextBox.Text))
-            {
-                MessageBox.Show("Введите IP сервера!");
-                return;
-            }
 
-            string ip = IPAddressTextBox.Text;
-            
-            try
-            {
-                client = new TcpClient(ip, port);
-            }
-            catch
-            {
-                MessageBox.Show("Сервер недоступен!");
-                return;
-            }
-            TextBlockClient.Text += "\nПодключено к серверу!";
-
-            stream = client.GetStream();
-            isConnected = true;
-
-            LoadInfoForGraphics();
-        }
-        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
-        {
-            DisconnectButton.IsEnabled = false;
-            ConnectButton.IsEnabled = true;
-
-            try
-            {
-                isConnected = false;
-
-                Thread.Sleep(1000);
-
-                stream?.Close();
-                client?.Close();
-
-                TextBlockClient.Text +=
-                    "\nОтключено от сервера";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-    
-        private async void LoadInfoForGraphics()
-        {
-            StreamReader reader = new StreamReader(stream);
-
-            await Task.Run(() =>
-            {
-                while (isConnected && client != null && client.Connected)
-                {
-                    string? response = reader.ReadLine();
-
-                    if (response == null)
-                        break;
-
-                    string[] parts = response.Split(',');
-
-                    if (parts.Length != 2)
-                        continue;
-
-                    double temperature =
-                        double.Parse(parts[0]);
-
-                    double pressure =
-                        double.Parse(parts[1]);
-
-                    Dispatcher.Invoke(() =>
-                    {
-                        TemperatureValues.Add(temperature);
-
-                        if (TemperatureValues.Count > 20)
-                            TemperatureValues.RemoveAt(0);
-
-                        PressureValues.Add(pressure);
-
-                        if (PressureValues.Count > 20)
-                            PressureValues.RemoveAt(0);
-                    });
-                }
-            });
-        }
     }
 }

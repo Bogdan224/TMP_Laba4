@@ -102,12 +102,12 @@
 
                                 <Button Content="Выход" 
                                         Background="#FFECE9D8"
-                                        Margin="20 5 0 5" Width="80"/>
+                                        Margin="20 5 0 5" Width="80" Click="QuitButton_Click"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Передать серверу" 
                                         Background="#FFECE9D8"
-                                        Margin="5" Width="155"/>
+                                        Margin="5" Width="155" Click="TransmitToServerButton_Click"/>
 
                                 <Button Content="Передать клиенту" 
                                         Background="#FFECE9D8"
@@ -120,10 +120,12 @@
                             <TextBlock Text="Клиентская сторона"
                                         Margin="20 5 20 5" Height="20"/>
 
-                            <TextBlock x:Name="TextBlockClient"
-                                       TextWrapping="Wrap" 
-                                       Margin="20 5 20 5" Background="White"
-                                       Height="440" Width="280"/>
+                            <ScrollViewer Margin="20 5 20 5" VerticalScrollBarVisibility="Auto"
+                                          Height="440" Width="280">
+                                <TextBlock x:Name="TextBlockClient"
+                                           TextWrapping="Wrap" 
+                                           Background="White"/>
+                            </ScrollViewer>
                         </StackPanel>
 
                         <StackPanel Width="550">
