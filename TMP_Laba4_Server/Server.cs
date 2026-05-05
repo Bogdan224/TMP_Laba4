@@ -29,8 +29,9 @@ namespace ProcessController_Server
                 {
                     if (listener.Pending())
                     {
+                        Console.WriteLine("Пользователь подключен!");
                         TcpClient client = listener.AcceptTcpClient();
-                        Task.Run(() => Process(client));
+                        Task.Run(() => ProcessAsync(client));
                     }
                 }
             }
@@ -44,13 +45,14 @@ namespace ProcessController_Server
             }
         }
 
-        private void Process(TcpClient client)
+        private async void ProcessAsync(TcpClient client)
         {
             try
             {
                 if (Action == null)
                     throw new Exception("Не выбрано действие для вычислений!");
-                Action.Invoke(client);
+
+                await Task.Run(() => Action.Invoke(client));
             }
             catch (Exception ex)
             {
