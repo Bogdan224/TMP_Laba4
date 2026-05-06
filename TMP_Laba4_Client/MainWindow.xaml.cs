@@ -112,7 +112,7 @@ namespace TMP_Laba4_Client
 
         private async void TransmitToServerButton_Click(object sender, RoutedEventArgs e)
         {
-            if (writer == null)
+            if (writer == null || isConnected == false)
                 return;
 
             await writer.WriteLineAsync(PathFolders.Text);
@@ -122,8 +122,13 @@ namespace TMP_Laba4_Client
         {
             await Task.Run(() =>
             {
-                while (isConnected && client != null && client.Connected)
+                try
                 {
+                    while (isConnected && client != null && client.Connected)
+                {
+                    if (isConnected == false)
+                        break;
+
                     string? response = reader.ReadLine();
 
                     if (response == null)
@@ -167,96 +172,122 @@ namespace TMP_Laba4_Client
                         }
                     });
                 }
+                }
+                catch (IOException)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        TextBlockClient.Text += "Соединение закрыто\n";
+                    });
+                }
+                catch (ObjectDisposedException)
+                {
+                }
             });
         }
 
-        // ДОДЕЛАТЬ
-        //private async void InstallationsWindowOpenButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    InstallationsWindow installationsWindow = new InstallationsWindow();
-        //    installationsWindow.Show();
+        private async void InstallationButton_Click(object sender, RoutedEventArgs e)
+        {
+            GraphsStackPanel.Visibility = Visibility.Collapsed;
+            ButtonsPanel.Visibility = Visibility.Visible;
 
-        //    bool buttonsCreated = false;
+            bool buttonsCreated = false;
 
-        //    await Task.Run(() =>
-        //    {
-        //        while (isConnected &&
-        //               client != null &&
-        //               client.Connected)
-        //        {
-        //            string? response = reader.ReadLine();
+            await Task.Run(() =>
+            {
+                try
+                {
+                    while (isConnected && client != null && client.Connected)
+                {
+                    if (isConnected == false)
+                        break;
 
-        //            if (response == null)
-        //                break;
+                    string? response = reader.ReadLine();
 
-        //            Dispatcher.Invoke(() =>
-        //            {
-        //                if (isConnected == false)
-        //                    return;
+                    if (response == null)
+                        break;
 
-        //                if (response.StartsWith("COUNT:"))
-        //                {
-        //                    if (buttonsCreated)
-        //                        return;
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (isConnected == false)
+                            return;
 
-        //                    int count = int.Parse(response.Replace("COUNT:", ""));
+                        if (response.StartsWith("COUNT:"))
+                        {
+                            if (buttonsCreated)
+                                return;
 
-
-        //                    for (int i = 0; i < count; i++)
-        //                    {
-        //                        Button button = new Button();
-
-        //                        button.Width = 150;
-        //                        button.Height = 70;
-        //                        button.Margin = new Thickness(5);
-
-        //                        button.Content = $"Установка {i}";
+                            int count = int.Parse(response.Replace("COUNT:", ""));
 
 
-        //                        installationsWindow.ButtonsPanel.Children.Add(button);
-        //                    }
+                            for (int i = 0; i < count; i++)
+                            {
+                                Button button = new Button();
 
-        //                    buttonsCreated = true;
-        //                }
-        //                else
-        //                {
-        //                    string[] parts = response.Split(',');
+                                button.Width = 150;
+                                button.Height = 70;
+                                button.Margin = new Thickness(5);
 
-        //                    int index = int.Parse(parts[0]);
-        //                    int status = int.Parse(parts[1]);
+                                button.Content = $"Установка {i}";
 
-        //                    if (index >= installationsWindow.ButtonsPanel.Children.Count)
-        //                        return;
 
-        //                    Button button = (Button)installationsWindow.ButtonsPanel.Children[index];
+                                ButtonsPanel.Children.Add(button);
+                            }
 
-        //                    string statusText = "";
+                            buttonsCreated = true;
+                        }
+                        else
+                        {
+                            string[] parts = response.Split(',');
 
-        //                    switch (status)
-        //                    {
-        //                        case 0:
-        //                            statusText = "Работает";
-        //                            button.Background = Brushes.Green;
-        //                            break;
+                            int index = int.Parse(parts[0]);
+                            int status = int.Parse(parts[1]);
 
-        //                        case 1:
-        //                            statusText = "Авария";
-        //                            button.Background = Brushes.Red;
-        //                            break;
+                            if (index >= ButtonsPanel.Children.Count)
+                                return;
 
-        //                        case 2:
-        //                            statusText = "Ремонт";
-        //                            button.Background = Brushes.Gray;
-        //                            break;
-        //                    }
+                            Button button = (Button)ButtonsPanel.Children[index];
 
-        //                    button.Content =
-        //                        $"Установка {index}\n{statusText}";
-        //                }
-        //            });
-        //        }
-        //    });
-        //}
+                            string statusText = "";
+
+                            switch (status)
+                            {
+                                case 0:
+                                    statusText = "Работает";
+                                    button.Background = Brushes.Green;
+                                    break;
+
+                                case 1:
+                                    statusText = "Авария";
+                                    button.Background = Brushes.Red;
+                                    break;
+
+                                case 2:
+                                    statusText = "Ремонт";
+                                    button.Background = Brushes.Gray;
+                                    break;
+                            }
+
+                            button.Content =
+                                $"Установка {index}\n{statusText}";
+                        }
+                    });
+                }
+                }
+                catch (IOException)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        TextBlockClient.Text += "Соединение закрыто\n";
+                    });
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+            });
+
+            InstallationButton.IsEnabled = false;
+        }
 
         private void LoadFoldersFromPath(string path)
         {
