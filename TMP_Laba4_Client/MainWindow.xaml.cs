@@ -1,6 +1,5 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using ProcessController_Client;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -40,8 +39,6 @@ namespace TMP_Laba4_Client
         {
             InitializeComponent();
 
-            LoadPathsToComboBox();
-
             CreateSeries();
 
             DataContext = this;
@@ -49,9 +46,13 @@ namespace TMP_Laba4_Client
 
         private void PathFolders_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (PathFolders.SelectedItem == null) return;
+            if (PathFolders.SelectedItem == null) 
+                return;
 
-            string selectedPath = PathFolders.SelectedItem.ToString();
+            string? selectedPath = PathFolders.SelectedItem.ToString();
+
+            if (selectedPath == null)
+                return;
 
             LoadFoldersFromPath(selectedPath);
         }
@@ -125,53 +126,67 @@ namespace TMP_Laba4_Client
                 try
                 {
                     while (isConnected && client != null && client.Connected)
-                {
-                    if (isConnected == false)
-                        break;
-
-                    string? response = reader.ReadLine();
-
-                    if (response == null)
-                        break;
-
-                    Dispatcher.BeginInvoke(() =>
                     {
                         if (isConnected == false)
-                            return;
+                            break;
 
-                        if (response.StartsWith("DATA:"))
+                        string? response = reader.ReadLine();
+
+                        if (response == null)
+                            break;
+
+                        if (response == "END_DRIVES")
+                            break;
+
+                        if (response.StartsWith("DRIVE:"))
                         {
-                            string data = response.Replace("DATA:", "");
+                            string drive = response.Replace("DRIVE:", "");
 
-                            string[] parts = data.Split(',');
-
-                            double temperature = double.Parse(parts[0]);
-                            double pressure = double.Parse(parts[1]);
-
-                            TextBlockClient.Text += $"T = {temperature}, P = {pressure}\n";
-
-                            TemperatureValues.Add(temperature);
-
-                            if (TemperatureValues.Count > 20)
-                                TemperatureValues.RemoveAt(0);
-
-                            PressureValues.Add(pressure);
-
-                            if (PressureValues.Count > 20)
-                                PressureValues.RemoveAt(0);
+                            Dispatcher.Invoke(() =>
+                            {
+                                PathFolders.Items.Add(drive);
+                            });
                         }
-                        else if (response.StartsWith("FILE:"))
+
+                        Dispatcher.BeginInvoke(() =>
                         {
-                            string fileName = response.Replace("FILE:", "");
 
-                            TextBlockClient.Text += $"Файл: {fileName}\n";
-                        }
-                        else if (response == "END")
-                        {
-                            TextBlockClient.Text += "Передача файлов завершена\n";
-                        }
-                    });
-                }
+                            if (isConnected == false)
+                                return;
+
+                            if (response.StartsWith("DATA:"))
+                            {
+                                string data = response.Replace("DATA:", "");
+
+                                string[] parts = data.Split(',');
+
+                                double temperature = double.Parse(parts[0]);
+                                double pressure = double.Parse(parts[1]);
+
+                                TextBlockClient.Text += $"T = {temperature}, P = {pressure}\n";
+
+                                TemperatureValues.Add(temperature);
+
+                                if (TemperatureValues.Count > 20)
+                                    TemperatureValues.RemoveAt(0);
+
+                                PressureValues.Add(pressure);
+
+                                if (PressureValues.Count > 20)
+                                    PressureValues.RemoveAt(0);
+                            }
+                            else if (response.StartsWith("FILE:"))
+                            {
+                                string fileName = response.Replace("FILE:", "");
+
+                                TextBlockClient.Text += $"Файл: {fileName}\n";
+                            }
+                            else if (response == "END")
+                            {
+                                TextBlockClient.Text += "Передача файлов завершена\n";
+                            }
+                        });
+                    }
                 }
                 catch (IOException)
                 {
@@ -286,7 +301,7 @@ namespace TMP_Laba4_Client
                 }
             });
 
-            InstallationButton.IsEnabled = false;
+            //InstallationButton.IsEnabled = false;
         }
 
         private void LoadFoldersFromPath(string path)
@@ -320,14 +335,6 @@ namespace TMP_Laba4_Client
             {
                 FoldersList.Items.Add($"Ошибка: {ex.Message}");
             }
-        }
-        private void LoadPathsToComboBox()
-        {
-            PathFolders.Items.Add(@"C:\");
-            PathFolders.Items.Add(@"C:\Users");
-            PathFolders.Items.Add(@"C:\Program Files");
-            PathFolders.Items.Add(@"C:\Windows");
-            PathFolders.Items.Add(@"D:\");
         }
         private void CreateSeries()
         {

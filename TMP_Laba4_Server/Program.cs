@@ -102,7 +102,17 @@ namespace TMP_Laba4_Server
             {
                 while (client.Connected)
                 {
-                    string path = reader.ReadLine();
+                    string[] drives = Directory.GetLogicalDrives();
+
+                    foreach (string drive in drives)
+                    {
+                        writer.WriteLine($"DRIVE:{drive}");
+                    }
+
+                    writer.WriteLine("END_DRIVES");
+                    writer.Flush();
+
+                    string? path = reader.ReadLine();
 
                     if (!Directory.Exists(path))
                     {
