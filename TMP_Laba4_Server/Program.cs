@@ -109,9 +109,6 @@ namespace TMP_Laba4_Server
                         writer.WriteLine($"DRIVE:{drive}");
                     }
 
-                    writer.WriteLine("END_DRIVES");
-                    writer.Flush();
-
                     string? path = reader.ReadLine();
 
                     if (!Directory.Exists(path))
@@ -131,7 +128,7 @@ namespace TMP_Laba4_Server
                         foreach (string files in fileSystem)
                         {
                             string folderName = Path.GetFileName(files);
-                            responseSB.Append("FILE:" + folderName + '\n');
+                            responseSB.Append("FILE:" + folderName + ',');
                         }
                     }
                     else if (Path.GetExtension(path) == ".txt")

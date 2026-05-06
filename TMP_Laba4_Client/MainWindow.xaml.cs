@@ -29,8 +29,22 @@ namespace TMP_Laba4_Client
 
         private bool isConnected = false;
 
+        public bool IsConnected
+        {
+            get => isConnected;
+
+            set
+            {
+                isConnected = value;
+                Notify?.Invoke(isConnected);
+            }
+        }
+
         public ObservableCollection<double> TemperatureValues { get; set; }
         public ObservableCollection<double> PressureValues { get; set; }
+
+        public delegate void AccountHandler(bool isConnected); 
+        public event AccountHandler? Notify;
 
         public ISeries[] TemperatureSeries { get; set; }
         public ISeries[] PressureSeries { get; set; }
@@ -42,6 +56,24 @@ namespace TMP_Laba4_Client
             CreateSeries();
 
             DataContext = this;
+            Notify += OnConnected;
+
+            serverButton.IsEnabled = false;
+            clientButton.IsEnabled = false;
+        }
+
+        public void OnConnected(bool isConnected)
+        {
+            if (isConnected)
+            {
+                serverButton.IsEnabled  = true;
+                clientButton.IsEnabled = true;
+            }
+            else
+            {
+                serverButton.IsEnabled = false;
+                clientButton.IsEnabled = false;
+            }
         }
 
         private void PathFolders_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -53,8 +85,6 @@ namespace TMP_Laba4_Client
 
             if (selectedPath == null)
                 return;
-
-            LoadFoldersFromPath(selectedPath);
         }
 
         private void ConnectButton_Click(object sender, RoutedEventArgs e)
@@ -84,7 +114,7 @@ namespace TMP_Laba4_Client
             stream = client.GetStream();
             reader = new StreamReader(stream);
             writer = new StreamWriter(stream);
-            isConnected = true;
+            IsConnected = true;
         }
         private void DisconnectButton_Click(object sender, RoutedEventArgs e)
         {
@@ -93,12 +123,12 @@ namespace TMP_Laba4_Client
 
             try
             {
-                isConnected = false;
-
-                Thread.Sleep(1000);
+                IsConnected = false;
 
                 stream?.Close();
                 client?.Close();
+
+                Thread.Sleep(1000);
 
                 TextBlockClient.Text +=
                     "Отключено от сервера\n";
@@ -119,86 +149,78 @@ namespace TMP_Laba4_Client
             await writer.WriteLineAsync(PathFolders.Text);
             await writer.FlushAsync();
         }
+
+        private bool _isLoading = false;
+
         private async void LoadInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            await Task.Run(() =>
+            if (_isLoading) 
+                return;
+
+            try
             {
-                try
+                await Task.Run(() =>
                 {
-                    while (isConnected && client != null && client.Connected)
+                    try
                     {
-                        if (isConnected == false)
-                            break;
-
-                        string? response = reader.ReadLine();
-
-                        if (response == null)
-                            break;
-
-                        if (response == "END_DRIVES")
-                            break;
-
-                        if (response.StartsWith("DRIVE:"))
+                        while (client != null && client.Connected)
                         {
-                            string drive = response.Replace("DRIVE:", "");
+                            string? response = reader.ReadLine();
 
-                            Dispatcher.Invoke(() =>
+                            if (response == null)
+                                break;
+
+                            if (response.StartsWith("DRIVE:"))
                             {
-                                PathFolders.Items.Add(drive);
-                            });
-                        }
-
-                        Dispatcher.BeginInvoke(() =>
-                        {
-
-                            if (isConnected == false)
-                                return;
-
-                            if (response.StartsWith("DATA:"))
+                                string drive = response.Replace("DRIVE:", "");
+                                Dispatcher.Invoke(() => PathFolders.Items.Add(drive));
+                            }
+                            else if (response.StartsWith("DATA:"))
                             {
                                 string data = response.Replace("DATA:", "");
-
                                 string[] parts = data.Split(',');
-
                                 double temperature = double.Parse(parts[0]);
                                 double pressure = double.Parse(parts[1]);
 
-                                TextBlockClient.Text += $"T = {temperature}, P = {pressure}\n";
+                                Dispatcher.Invoke(() =>
+                                {
+                                    TextBlockClient.Text += $"T = {temperature}, P = {pressure}\n";
+                                    TemperatureValues.Add(temperature);
+                                    PressureValues.Add(pressure);
 
-                                TemperatureValues.Add(temperature);
-
-                                if (TemperatureValues.Count > 20)
-                                    TemperatureValues.RemoveAt(0);
-
-                                PressureValues.Add(pressure);
-
-                                if (PressureValues.Count > 20)
-                                    PressureValues.RemoveAt(0);
+                                    if (TemperatureValues.Count > 20) TemperatureValues.RemoveAt(0);
+                                    if (PressureValues.Count > 20) PressureValues.RemoveAt(0);
+                                });
                             }
                             else if (response.StartsWith("FILE:"))
                             {
                                 string fileName = response.Replace("FILE:", "");
+                                fileName = fileName.Replace(',', '\n');
 
-                                TextBlockClient.Text += $"Файл: {fileName}\n";
+                                Dispatcher.Invoke(() =>
+                                {
+                                    FileTextBlock.Text = "";
+                                    TextBlockClient.Text += $"Файл: {fileName}\n";
+                                    FileTextBlock.Text += fileName;
+                                });
                             }
                             else if (response == "END")
                             {
-                                TextBlockClient.Text += "Передача файлов завершена\n";
+                                Dispatcher.Invoke(() => TextBlockClient.Text += "Передача файлов завершена\n");
                             }
-                        });
+                        }
                     }
-                }
-                catch (IOException)
-                {
-                    Dispatcher.Invoke(() =>
+                    catch (IOException)
                     {
-                        TextBlockClient.Text += "Соединение закрыто\n";
-                    });
-                }
-                catch (ObjectDisposedException)
-                {
-                }
-            });
+                        Dispatcher.Invoke(() => TextBlockClient.Text += "Соединение закрыто\n");
+                    }
+                    catch (ObjectDisposedException) { }
+                });
+            }
+            finally
+            {
+                _isLoading = false;
+            }
         }
 
         private async void InstallationButton_Click(object sender, RoutedEventArgs e)
@@ -243,8 +265,7 @@ namespace TMP_Laba4_Client
                                 button.Height = 70;
                                 button.Margin = new Thickness(5);
 
-                                button.Content = $"Установка {i}";
-
+                                button.Click += Button_Click;
 
                                 ButtonsPanel.Children.Add(button);
                             }
@@ -263,23 +284,31 @@ namespace TMP_Laba4_Client
 
                             Button button = (Button)ButtonsPanel.Children[index];
 
+                            button.Tag = index;
+
                             string statusText = "";
 
                             switch (status)
                             {
                                 case 0:
-                                    statusText = "Работает";
+                                    statusText = "Работает";                                    
+                                    button.Focusable = false;
+                                    button.IsHitTestVisible = false;
                                     button.Background = Brushes.Green;
                                     break;
 
                                 case 1:
                                     statusText = "Авария";
                                     button.Background = Brushes.Red;
+                                    button.Focusable = true;
+                                    button.IsHitTestVisible = true;
                                     break;
 
                                 case 2:
                                     statusText = "Ремонт";
                                     button.Background = Brushes.Gray;
+                                    button.Focusable = false;
+                                    button.IsHitTestVisible = false;
                                     break;
                             }
 
@@ -300,42 +329,16 @@ namespace TMP_Laba4_Client
                 {
                 }
             });
-
-            //InstallationButton.IsEnabled = false;
         }
 
-        private void LoadFoldersFromPath(string path)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            FoldersList.Items.Clear();
+            int index = (int)((Button)sender).Tag;
 
-            if (!Directory.Exists(path))
-            {
-                FoldersList.Items.Add($"Папка не найдена: {path}");
-                return;
-            }
-
-            try
-            {
-                string[] folders = Directory.GetDirectories(path);
-
-                if (folders.Length == 0)
-                {
-                    FoldersList.Items.Add("Нет папок в этой директории");
-                }
-                else
-                {
-                    foreach (string folder in folders)
-                    {
-                        string folderName = Path.GetFileName(folder);
-                        FoldersList.Items.Add(folderName);
-                    }
-                }
-            }
-            catch (System.Exception ex)
-            {
-                FoldersList.Items.Add($"Ошибка: {ex.Message}");
-            }
+            await writer.WriteLineAsync(index.ToString());
+            await writer.FlushAsync();
         }
+
         private void CreateSeries()
         {
             TemperatureValues = new ObservableCollection<double>();
