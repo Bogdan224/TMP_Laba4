@@ -108,6 +108,8 @@ namespace TMP_Laba4_Client
             catch
             {
                 MessageBox.Show("Сервер недоступен!");
+                ConnectButton.IsEnabled = true;
+                DisconnectButton.IsEnabled = false;
                 return;
             }
             TextBlockClient.Text += "Подключено к серверу!\n";
