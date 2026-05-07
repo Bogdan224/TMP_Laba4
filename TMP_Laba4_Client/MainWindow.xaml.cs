@@ -1,5 +1,6 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using OpenTK.Input;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -43,7 +44,7 @@ namespace TMP_Laba4_Client
         public ObservableCollection<double> TemperatureValues { get; set; }
         public ObservableCollection<double> PressureValues { get; set; }
 
-        public delegate void AccountHandler(bool isConnected); 
+        public delegate void AccountHandler(bool isConnected);
         public event AccountHandler? Notify;
 
         public ISeries[] TemperatureSeries { get; set; }
@@ -66,7 +67,7 @@ namespace TMP_Laba4_Client
         {
             if (isConnected)
             {
-                serverButton.IsEnabled  = true;
+                serverButton.IsEnabled = true;
                 clientButton.IsEnabled = true;
             }
             else
@@ -78,7 +79,7 @@ namespace TMP_Laba4_Client
 
         private void PathFolders_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (PathFolders.SelectedItem == null) 
+            if (PathFolders.SelectedItem == null)
                 return;
 
             string? selectedPath = PathFolders.SelectedItem.ToString();
@@ -99,7 +100,7 @@ namespace TMP_Laba4_Client
             }
 
             string ip = IPAddressTextBox.Text;
-            
+
             try
             {
                 client = new TcpClient(ip, port);
@@ -154,7 +155,7 @@ namespace TMP_Laba4_Client
 
         private async void LoadInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isLoading) 
+            if (_isLoading)
                 return;
 
             try
@@ -235,88 +236,104 @@ namespace TMP_Laba4_Client
                 try
                 {
                     while (isConnected && client != null && client.Connected)
-                {
-                    if (isConnected == false)
-                        break;
-
-                    string? response = reader.ReadLine();
-
-                    if (response == null)
-                        break;
-
-                    Dispatcher.Invoke(() =>
                     {
                         if (isConnected == false)
-                            return;
+                            break;
 
-                        if (response.StartsWith("COUNT:"))
+                        string? response = reader.ReadLine();
+
+                        if (response == null)
+                            break;
+
+                        Dispatcher.Invoke(() =>
                         {
-                            if (buttonsCreated)
+                            if (isConnected == false)
                                 return;
 
-                            int count = int.Parse(response.Replace("COUNT:", ""));
-
-
-                            for (int i = 0; i < count; i++)
+                            if (response.StartsWith("COUNT:"))
                             {
-                                Button button = new Button();
+                                if (buttonsCreated)
+                                    return;
 
-                                button.Width = 150;
-                                button.Height = 70;
-                                button.Margin = new Thickness(5);
+                                int count = int.Parse(response.Replace("COUNT:", ""));
 
-                                button.Click += Button_Click;
 
-                                ButtonsPanel.Children.Add(button);
+                                for (int i = 0; i < count; i++)
+                                {
+                                    Button button = new Button();
+
+                                    button.Width = 150;
+                                    button.Height = 70;
+                                    button.Margin = new Thickness(5);
+
+                                    button.Click += Button_Click;
+
+                                    ButtonsPanel.Children.Add(button);
+                                }
+
+                                buttonsCreated = true;
                             }
-
-                            buttonsCreated = true;
-                        }
-                        else
-                        {
-                            string[] parts = response.Split(',');
-
-                            int index = int.Parse(parts[0]);
-                            int status = int.Parse(parts[1]);
-
-                            if (index >= ButtonsPanel.Children.Count)
-                                return;
-
-                            Button button = (Button)ButtonsPanel.Children[index];
-
-                            button.Tag = index;
-
-                            string statusText = "";
-
-                            switch (status)
+                            else if (response.StartsWith("REPAIRED:"))
                             {
-                                case 0:
-                                    statusText = "Работает";                                    
-                                    button.Focusable = false;
-                                    button.IsHitTestVisible = false;
-                                    button.Background = Brushes.Green;
-                                    break;
+                                string status = response.Replace("REPAIRED:", "");
 
-                                case 1:
-                                    statusText = "Авария";
-                                    button.Background = Brushes.Red;
-                                    button.Focusable = true;
-                                    button.IsHitTestVisible = true;
-                                    break;
+                                if (!int.TryParse(status, out int index))
+                                    throw new Exception("Не удалось обработать ответ сервера!");
 
-                                case 2:
-                                    statusText = "Ремонт";
-                                    button.Background = Brushes.Gray;
-                                    button.Focusable = false;
-                                    button.IsHitTestVisible = false;
-                                    break;
+                                Button button = (Button)ButtonsPanel.Children[index];
+
+                                string statusText = "Работает";
+                                button.Focusable = false;
+                                button.IsHitTestVisible = false;
+                                button.Background = Brushes.Green;
+
+                                button.Content = $"Установка {index}\n{statusText}";
                             }
+                            else
+                            {
+                                string[] parts = response.Split(',');
 
-                            button.Content =
-                                $"Установка {index}\n{statusText}";
-                        }
-                    });
-                }
+                                int index = int.Parse(parts[0]);
+                                int status = int.Parse(parts[1]);
+
+                                if (index >= ButtonsPanel.Children.Count)
+                                    return;
+
+                                Button button = (Button)ButtonsPanel.Children[index];
+
+                                button.Tag = index;
+
+                                string statusText = "";
+
+                                switch (status)
+                                {
+                                    case 0:
+                                        statusText = "Работает";
+                                        button.Focusable = false;
+                                        button.IsHitTestVisible = false;
+                                        button.Background = Brushes.Green;
+                                        break;
+
+                                    case 1:
+                                        statusText = "Авария";
+                                        button.Background = Brushes.Red;
+                                        button.Focusable = true;
+                                        button.IsHitTestVisible = true;
+                                        break;
+
+                                    case 2:
+                                        statusText = "Ремонт";
+                                        button.Background = Brushes.Gray;
+                                        button.Focusable = false;
+                                        button.IsHitTestVisible = false;
+                                        break;
+                                }
+
+                                button.Content =
+                                    $"Установка {index}\n{statusText}";
+                            }
+                        });
+                    }
                 }
                 catch (IOException)
                 {
@@ -333,7 +350,15 @@ namespace TMP_Laba4_Client
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            int index = (int)((Button)sender).Tag;
+            Button button = sender as Button;
+
+            int index = (int)button.Tag;
+
+            string statusText = "Ремонт";
+            button.Background = Brushes.Gray;
+            button.Focusable = false;
+            button.IsHitTestVisible = false;
+            button.Content = $"Установка {index}\n{statusText}";
 
             await writer.WriteLineAsync(index.ToString());
             await writer.FlushAsync();

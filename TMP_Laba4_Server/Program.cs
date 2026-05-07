@@ -50,8 +50,10 @@ namespace TMP_Laba4_Server
                             server.Action = (client, stream) =>
                             {
                                 using StreamWriter writer = new StreamWriter(stream);
+                                using StreamReader reader = new StreamReader(stream);
 
                                 Task.Run(() => SendInstallationsState(client, stream, installations, writer));
+                                Task.Run(() => SendRepairedInstallation(client, stream, installations, writer, reader));
 
                                 while (client.Connected)
                                 {
@@ -155,7 +157,6 @@ namespace TMP_Laba4_Server
             {
                 Console.WriteLine($"Ошибка в SendDirectoryContent: {ex.Message}");
             }
-
         }
 
         static void SendTemperatureAndPressure(TcpClient client, NetworkStream stream, StreamWriter writer)
@@ -192,13 +193,13 @@ namespace TMP_Laba4_Server
 
                 while (client.Connected)
                 {
-                    lock (installations)
+
+                    foreach (TechInstallation installation in installations)
                     {
-                        foreach (TechInstallation installation in installations)
-                        {
+                        if(installation.InstallationStatus != TechInstallation.Status.Repair)
                             installation.Working();
-                        }
                     }
+
 
                     StringBuilder responseSB = new StringBuilder();
                     StringBuilder logSB = new StringBuilder();
@@ -218,8 +219,7 @@ namespace TMP_Laba4_Server
 
                     Console.WriteLine(logSB.ToString());
 
-                    Thread.Sleep(1000);
-                    Thread.Sleep(1000);
+                    Thread.Sleep(2000);
                 }
             }
             catch (Exception ex)
@@ -228,9 +228,45 @@ namespace TMP_Laba4_Server
             }
         }
 
-        static void SendRepairedInstallation(TcpClient client)
+        static void SendRepairedInstallation(TcpClient client, NetworkStream stream, IList<TechInstallation> installations, StreamWriter writer, StreamReader reader)
         {
+            try
+            {
+                while (client.Connected)
+                {
+                    string? request = reader.ReadLine();
 
+                    if (!int.TryParse(request, out int index))
+                        throw new Exception("Неправильный тип данных");
+
+                    installations[index].InstallationStatus = TechInstallation.Status.Repair;
+
+
+                    while (installations[index].InstallationStatus != TechInstallation.Status.Success)
+                    {
+                        installations[index].Working();
+                        Thread.Sleep(2000);
+                    }
+
+
+                    StringBuilder responseSB = new StringBuilder();
+                    StringBuilder logSB = new StringBuilder();
+                    logSB.Append($"Починина установка {index}\n");
+
+                    responseSB.Append("REPAIRED:" + index + '\n');
+
+                    writer.Write(responseSB.ToString());
+                    writer.Flush();
+
+                    Console.WriteLine(logSB.ToString());
+
+                    Thread.Sleep(2000);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка в SendInstallationsState: {ex.Message}");
+            }
         }
     }
 }
