@@ -17,15 +17,13 @@
                                             IsEditable="True"
                                             Margin="5 5 20 5" Height="20"/>
 
-                    <TextBlock x:Name="FileTextBlock" Margin="5 5 20 5" Height="370" Width="305" Background="white" 
-                               TextWrapping="Wrap"/>
-                    <!--
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                                Margin="5 5 20 5" Height="370"
-                                                Background="white">
+                                  Margin="5 5 20 5" Height="370" Background="white">
 
+                        <TextBlock x:Name="FileTextBlock" Margin="5 5 20 5" Height="370" Width="305" Background="white" 
+                                   TextWrapping="Wrap"/>
                     </ScrollViewer>
-                    -->
+
                     
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="IP-адрес" 
@@ -80,7 +78,7 @@
                                                 Series="{Binding PressureSeries}"/>
                 </StackPanel>
 
-                <StackPanel Visibility="Collapsed" Height="310" Width="550" x:Name="ButtonsPanel"/>
+                <WrapPanel Visibility="Collapsed" Height="310" Width="550" x:Name="ButtonsPanel" />
             </StackPanel>
         </DockPanel>
     </Grid> 
