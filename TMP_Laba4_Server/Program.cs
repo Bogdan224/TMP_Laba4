@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using ProcessController_Server;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -13,6 +14,10 @@ namespace TMP_Laba4_Server
     {
         private static Random random = new Random();
         private static bool isRunning = true;
+
+        private static ConcurrentQueue<int> repairQueue = new ConcurrentQueue<int>();
+        private static SemaphoreSlim repairSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
+        private static CancellationTokenSource cts = new CancellationTokenSource();
 
         static void Main(string[] args)
         {
@@ -47,13 +52,15 @@ namespace TMP_Laba4_Server
                         case 2:
                             InitializeInstallationsList(out List<TechInstallation> installations);
 
+                            StartRepairWorkers(installations);
+
                             server.Action = (client, stream) =>
                             {
                                 using StreamWriter writer = new StreamWriter(stream);
                                 using StreamReader reader = new StreamReader(stream);
 
                                 Task.Run(() => SendInstallationsState(client, stream, installations, writer));
-                                Task.Run(() => SendRepairedInstallation(client, stream, installations, writer, reader));
+                                Task.Run(() => HandleRepairRequests(client, stream, installations, writer, reader));
 
                                 while (client.Connected)
                                 {
@@ -228,7 +235,98 @@ namespace TMP_Laba4_Server
             }
         }
 
-        static void SendRepairedInstallation(TcpClient client, NetworkStream stream, IList<TechInstallation> installations, StreamWriter writer, StreamReader reader)
+        static void StartRepairWorkers(IList<TechInstallation> installations)
+        {
+            int workerCount = Environment.ProcessorCount * 2; // Количество параллельных обработчиков
+            for (int i = 0; i < workerCount; i++)
+            {
+                Task.Run(() => ProcessRepairQueue(installations, cts.Token));
+            }
+            Console.WriteLine($"Запущено {workerCount} обработчиков ремонта");
+        }
+
+        // Воркер, обрабатывающий очередь запросов на починку
+        static async Task ProcessRepairQueue(IList<TechInstallation> installations, CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                if (repairQueue.TryDequeue(out int index))
+                {
+                    await RepairInstallationAsync(installations, index);
+                }
+                else
+                {
+                    await Task.Delay(100, token); // Ожидание новых запросов
+                }
+            }
+        }
+
+        // Асинхронный ремонт установки (не блокирует другие операции)
+        static async Task RepairInstallationAsync(IList<TechInstallation> installations, int index)
+        {
+            await repairSemaphore.WaitAsync();
+            try
+            {
+                lock (installations)
+                {
+                    if (installations[index].InstallationStatus != TechInstallation.Status.Crash)
+                    {
+                        Console.WriteLine($"Установка {index} не сломана, ремонт не требуется");
+                        return;
+                    }
+
+                    Console.WriteLine($"Начало ремонта установки {index}");
+                    installations[index].InstallationStatus = TechInstallation.Status.Repair;
+                }
+
+                await WaitForRepairCompletion(installations, index);
+
+                lock (installations)
+                {
+                    if (installations[index].InstallationStatus == TechInstallation.Status.Repair)
+                    {
+                        installations[index].InstallationStatus = TechInstallation.Status.Success;
+                        Console.WriteLine($"Ремонт установки {index} завершен успешно");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при ремонте установки {index}: {ex.Message}");
+                lock (installations)
+                {
+                    installations[index].InstallationStatus = TechInstallation.Status.Crash;
+                }
+            }
+            finally
+            {
+                repairSemaphore.Release();
+            }
+        }
+
+        static async Task WaitForRepairCompletion(IList<TechInstallation> installations, int index)
+        {
+            while (true)
+            {
+                await Task.Delay(2000);
+
+                lock (installations)
+                {
+                    if (installations[index].InstallationStatus != TechInstallation.Status.Repair)
+                    {
+                        return;
+                    }
+
+                    var workingMethod = typeof(TechInstallation).GetMethod("Working");
+                    if (workingMethod != null)
+                    {
+                        workingMethod.Invoke(installations[index], null);
+                    }
+                }
+            }
+        }
+
+        static void HandleRepairRequests(TcpClient client, NetworkStream stream, IList<TechInstallation> installations, StreamWriter writer, StreamReader reader)
         {
             try
             {
@@ -236,36 +334,42 @@ namespace TMP_Laba4_Server
                 {
                     string? request = reader.ReadLine();
 
-                    if (!int.TryParse(request, out int index))
-                        throw new Exception("Неправильный тип данных");
+                    if (request == null) break;
 
-                    installations[index].InstallationStatus = TechInstallation.Status.Repair;
-
-
-                    while (installations[index].InstallationStatus != TechInstallation.Status.Success)
+                    if (int.TryParse(request, out int index))
                     {
-                        installations[index].Working();
-                        Thread.Sleep(2000);
+                        lock (installations)
+                        {
+                            if (index < 0 || index >= installations.Count)
+                            {
+                                writer.WriteLine($"Ошибка: неверный индекс {index}");
+                                writer.Flush();
+                                continue;
+                            }
+
+                            if (installations[index].InstallationStatus != TechInstallation.Status.Crash)
+                            {
+                                writer.WriteLine($"Ошибка: установка {index} не сломана (текущий статус: {installations[index].InstallationStatus})");
+                                writer.Flush();
+                                continue;
+                            }
+                        }
+
+                        // Добавляем запрос в очередь для параллельной обработки
+                        repairQueue.Enqueue(index);
+
+                        Console.WriteLine($"Установка {index} добавлена в очередь на ремонт");
                     }
-
-
-                    StringBuilder responseSB = new StringBuilder();
-                    StringBuilder logSB = new StringBuilder();
-                    logSB.Append($"Починина установка {index}\n");
-
-                    responseSB.Append("REPAIRED:" + index + '\n');
-
-                    writer.Write(responseSB.ToString());
-                    writer.Flush();
-
-                    Console.WriteLine(logSB.ToString());
-
-                    Thread.Sleep(2000);
+                    else
+                    {
+                        writer.WriteLine("Ошибка: неверный формат");
+                        writer.Flush();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка в SendInstallationsState: {ex.Message}");
+                Console.WriteLine($"Ошибка в HandleRepairRequests: {ex.Message}");
             }
         }
     }
