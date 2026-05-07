@@ -360,6 +360,8 @@ namespace TMP_Laba4_Client
             button.IsHitTestVisible = false;
             button.Content = $"Установка {index}\n{statusText}";
 
+            TextBlockClient.Text += $"Установка {index} на {statusText}е\n";
+
             await writer.WriteLineAsync(index.ToString());
             await writer.FlushAsync();
         }
