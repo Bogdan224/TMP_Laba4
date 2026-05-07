@@ -29,6 +29,7 @@ namespace TMP_Laba4_Client
         private StreamWriter writer;
 
         private bool isConnected = false;
+        private bool canEnable = true;
 
         public bool IsConnected
         {
@@ -228,8 +229,16 @@ namespace TMP_Laba4_Client
 
         private async void InstallationButton_Click(object sender, RoutedEventArgs e)
         {
+            InstallationButton.IsEnabled = false;
+            GraphsButton.IsEnabled = true;
+
             GraphsStackPanel.Visibility = Visibility.Collapsed;
             ButtonsPanel.Visibility = Visibility.Visible;
+
+            Dispatcher.Invoke(() =>
+            {
+                ButtonsPanel.Children.Clear();
+            });
 
             bool buttonsCreated = false;
 
@@ -348,6 +357,15 @@ namespace TMP_Laba4_Client
                 {
                 }
             });
+        }
+
+        private void GraphsButton_Click(object sender, RoutedEventArgs e)
+        {
+            GraphsStackPanel.Visibility = Visibility.Visible;
+            ButtonsPanel.Visibility = Visibility.Collapsed;
+
+            GraphsButton.IsEnabled = false;
+            InstallationButton.IsEnabled = true;
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
