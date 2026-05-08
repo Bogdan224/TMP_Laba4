@@ -59,10 +59,6 @@
                         <Button Content="Установки" x:Name="InstallationButton" Click="InstallationButton_Click"
                                             Background="#FFECE9D8"
                                             Margin="5" Width="100"/>
-
-                        <Button Content="Графики" x:Name="GraphsButton" Click="GraphsButton_Click"
-                                            Background="#FFECE9D8"
-                                            Margin="5" Width="100"/>
                     </StackPanel>
 
                 </StackPanel>
