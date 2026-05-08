@@ -16,7 +16,6 @@ namespace TMP_Laba4_Server
         private static bool isRunning = true;
 
         private static ConcurrentQueue<int> repairQueue = new ConcurrentQueue<int>();
-        private static SemaphoreSlim repairSemaphore = new SemaphoreSlim(Environment.ProcessorCount);
         private static CancellationTokenSource cts = new CancellationTokenSource();
 
         static void Main(string[] args)
@@ -264,7 +263,6 @@ namespace TMP_Laba4_Server
         // Асинхронный ремонт установки (не блокирует другие операции)
         static async Task RepairInstallationAsync(IList<TechInstallation> installations, int index)
         {
-            await repairSemaphore.WaitAsync();
             try
             {
                 lock (installations)
@@ -297,10 +295,6 @@ namespace TMP_Laba4_Server
                 {
                     installations[index].InstallationStatus = TechInstallation.Status.Crash;
                 }
-            }
-            finally
-            {
-                repairSemaphore.Release();
             }
         }
 
